@@ -3,11 +3,11 @@
 `fbx-tree-view` is a viewer of internal FBX node tree (and their properties).
 This may be useful for developers who implement FBX loader.
 
-# Dependencies
+## Dependencies
 
 This software uses GTK+ 3.
 
-# Screenshot
+## Screenshot
 
 ![screenshot1](./resources/screenshot1.png)
 
