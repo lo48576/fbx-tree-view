@@ -1,0 +1,12 @@
+[package]
+name = "fbx-tree-view"
+version = "0.1.0"
+authors = ["Takuma YOSHIOKA <tashioka.256@gmail.com>"]
+
+[dependencies]
+#fbxcel = { path = "../fbxcel", default-features = false }
+fbxcel = { git = "https://github.com/l1048576/fbxcel", rev = "906f0e4645df6862065737e1adcca781b324ef65" }
+
+[dependencies.gtk]
+version = "0.1.0"
+features = ["v3_16"]
