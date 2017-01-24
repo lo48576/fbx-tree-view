@@ -134,6 +134,7 @@ fn main() {
 fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_tree: &FbxNodeTree, node_attrs: &FbxAttributeTable) {
     use std::fs::File;
     use std::io::BufReader;
+    use fbxcel::parser::binary::Parser;
 
     let path = path.as_ref();
     println!("FBX binary path = {}", path.display());
@@ -151,7 +152,7 @@ fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_t
             return;
         },
     };
-    let mut parser = fbxbin::BinaryParser::from_seekable(BufReader::new(file));
+    let mut parser = fbxbin::RootParser::from_seekable(BufReader::new(file));
     let mut open_nodes_iter = Vec::new();
     let mut attr_index = 0;
     let error;
@@ -169,7 +170,7 @@ fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_t
                 break;
             },
             Ok(Event::StartNode(mut header)) => {
-                let tree_iter = node_tree.append(open_nodes_iter.last(), &header.name, header.attributes.num_attributes(), attr_index);
+                let tree_iter = node_tree.append(open_nodes_iter.last(), header.name, header.attributes.num_attributes(), attr_index);
                 attr_index += header.attributes.num_attributes();
                 open_nodes_iter.push(tree_iter);
                 'load_attrs: loop {

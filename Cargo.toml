@@ -7,7 +7,7 @@ readme = "README.md"
 description = "GUI viewer of FBX tree structure"
 
 [dependencies]
-fbxcel = { git = "https://github.com/l1048576/fbxcel", rev = "906f0e4645df6862065737e1adcca781b324ef65" }
+fbxcel = "0.0.2"
 
 [dependencies.gtk]
 version = "0.1.0"
