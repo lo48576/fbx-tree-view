@@ -2,6 +2,7 @@
 #![warn(missing_docs)]
 
 extern crate fbxcel;
+extern crate gdk;
 extern crate gtk;
 
 use std::cell::{Cell, RefCell};
@@ -16,6 +17,7 @@ use gtk::{TreeStore, TreeView, ListStore};
 use gtk::{Menu, MenuItem, MenuBar};
 use gtk::{FileChooserDialog, FileChooserAction, FileFilter};
 use gtk::ScrolledWindow;
+use gtk::{AccelGroup, WidgetExt};
 
 pub mod fbx;
 
@@ -38,6 +40,8 @@ fn main() {
 
     let root_widget = gtk::Box::new(Orientation::Vertical, 0);
     window.add(&root_widget);
+    let accel_group = AccelGroup::new();
+    window.add_accel_group(&accel_group);
 
     //
     // Menu bar.
@@ -54,6 +58,12 @@ fn main() {
     menu_file.set_submenu(Some(&submenu_file));
     menu_bar.append(&menu_file);
     root_widget.pack_start(&menu_bar, false, false, 0);
+
+    {
+        use gdk::enums::key;
+        menu_file_open.add_accelerator("activate", &accel_group, key::O, gdk::CONTROL_MASK, gtk::ACCEL_VISIBLE);
+        menu_file_quit.add_accelerator("activate", &accel_group, key::Q, gdk::CONTROL_MASK, gtk::ACCEL_VISIBLE);
+    }
 
     //
     // FBX tree.

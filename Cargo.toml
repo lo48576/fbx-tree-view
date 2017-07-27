@@ -8,6 +8,7 @@ description = "GUI viewer of FBX tree structure"
 
 [dependencies]
 fbxcel = "0.0.2"
+gdk = "^0.5.3"
 
 [dependencies.gtk]
 version = "0.1.3"
