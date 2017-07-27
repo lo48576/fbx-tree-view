@@ -44,12 +44,12 @@ fn main() {
     //
 
     let menu_bar = MenuBar::new();
-    let menu_file = MenuItem::new_with_label("File");
+    let menu_file = MenuItem::new_with_mnemonic("_File");
     let submenu_file = Menu::new();
-    let menu_file_open = MenuItem::new_with_label("Open FBX binary");
+    let menu_file_open = MenuItem::new_with_mnemonic("_Open FBX binary");
     submenu_file.append(&menu_file_open);
     submenu_file.append(&gtk::SeparatorMenuItem::new());
-    let menu_file_quit = MenuItem::new_with_label("Quit");
+    let menu_file_quit = MenuItem::new_with_mnemonic("_Quit");
     submenu_file.append(&menu_file_quit);
     menu_file.set_submenu(Some(&submenu_file));
     menu_bar.append(&menu_file);
