@@ -17,7 +17,7 @@ use gtk::{TreeStore, TreeView, ListStore};
 use gtk::{Menu, MenuItem, MenuBar};
 use gtk::{FileChooserDialog, FileChooserAction, FileFilter};
 use gtk::ScrolledWindow;
-use gtk::{AccelGroup, WidgetExt};
+use gtk::{AccelFlags, AccelGroup, WidgetExt};
 
 pub mod fbx;
 
@@ -61,8 +61,8 @@ fn main() {
 
     {
         use gdk::enums::key;
-        menu_file_open.add_accelerator("activate", &accel_group, key::O, gdk::CONTROL_MASK, gtk::ACCEL_VISIBLE);
-        menu_file_quit.add_accelerator("activate", &accel_group, key::Q, gdk::CONTROL_MASK, gtk::ACCEL_VISIBLE);
+        menu_file_open.add_accelerator("activate", &accel_group, key::O, gdk::ModifierType::CONTROL_MASK, AccelFlags::VISIBLE);
+        menu_file_quit.add_accelerator("activate", &accel_group, key::Q, gdk::ModifierType::CONTROL_MASK, AccelFlags::VISIBLE);
     }
 
     //
@@ -218,14 +218,14 @@ fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> File
     let file_chooser = FileChooserDialog::new(Some("Open FBX binary file"), window.into(), FileChooserAction::Open);
     {
         let fbx_filter = FileFilter::new();
-        fbx_filter.set_name(Some("FBX files"));
+        gtk::FileFilterExt::set_name(&fbx_filter, Some("FBX files"));
         fbx_filter.add_pattern("*.fbx");
         fbx_filter.add_pattern("*.FBX");
         file_chooser.add_filter(&fbx_filter);
     }
     {
         let all_filter = FileFilter::new();
-        all_filter.set_name(Some("All files"));
+        gtk::FileFilterExt::set_name(&all_filter, Some("All files"));
         all_filter.add_pattern("*");
         file_chooser.add_filter(&all_filter);
     }
