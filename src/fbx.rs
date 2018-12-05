@@ -1,6 +1,8 @@
 //! FBX data.
 
-use fbxcel::parser::binary as fbxbin;
+use std::io;
+
+use fbxcel::pull_parser as fbxbin;
 
 /// FBX node attribute.
 #[derive(Debug, Clone)]
@@ -28,9 +30,7 @@ pub enum Attribute {
     /// `[f64]`.
     ArrayF64(Vec<f64>),
     /// `String`.
-    ///
-    /// Note that the string value in FBX might be non-UTF-8.
-    String(Result<String, Vec<u8>>),
+    String(String),
     /// `[u8]`.
     Binary(Vec<u8>),
 }
@@ -118,7 +118,7 @@ impl Attribute {
                     }
                 })
                 .collect(),
-            Attribute::String(Ok(ref val)) => {
+            Attribute::String(ref val) => {
                 val.chars()
                     .fold(String::with_capacity(val.len()), |mut s, c| {
                         match c {
@@ -132,7 +132,7 @@ impl Attribute {
                         s
                     })
             }
-            Attribute::String(Err(ref arr)) | Attribute::Binary(ref arr) => arr
+            Attribute::Binary(ref arr) => arr
                 .iter()
                 .enumerate()
                 .map(|(i, &val)| {
@@ -145,51 +145,81 @@ impl Attribute {
                 .collect(),
         }
     }
+}
 
-    /// Reads attribute in parser event into `Attribute`.
-    pub fn read<R: fbxbin::ParserSource>(attr: fbxbin::Attribute<R>) -> fbxbin::Result<Self> {
-        use fbxcel::parser::binary::{ArrayAttribute, PrimitiveAttribute, SpecialAttributeType};
+/// FBX 7.4 attribute visitor.
+#[derive(Debug, Clone)]
+pub struct AttributeVisitor;
 
-        match attr {
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::Bool(val)) => {
-                Ok(Attribute::SingleBool(val))
-            }
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::I16(val)) => {
-                Ok(Attribute::SingleI16(val))
-            }
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::I32(val)) => {
-                Ok(Attribute::SingleI32(val))
-            }
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::I64(val)) => {
-                Ok(Attribute::SingleI64(val))
-            }
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::F32(val)) => {
-                Ok(Attribute::SingleF32(val))
-            }
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::F64(val)) => {
-                Ok(Attribute::SingleF64(val))
-            }
-            fbxbin::Attribute::Array(ArrayAttribute::Bool(arr)) => {
-                Ok(Attribute::ArrayBool(arr.into_vec()?))
-            }
-            fbxbin::Attribute::Array(ArrayAttribute::I32(arr)) => {
-                Ok(Attribute::ArrayI32(arr.into_vec()?))
-            }
-            fbxbin::Attribute::Array(ArrayAttribute::I64(arr)) => {
-                Ok(Attribute::ArrayI64(arr.into_vec()?))
-            }
-            fbxbin::Attribute::Array(ArrayAttribute::F32(arr)) => {
-                Ok(Attribute::ArrayF32(arr.into_vec()?))
-            }
-            fbxbin::Attribute::Array(ArrayAttribute::F64(arr)) => {
-                Ok(Attribute::ArrayF64(arr.into_vec()?))
-            }
-            fbxbin::Attribute::Special(reader) => match reader.value_type() {
-                SpecialAttributeType::Binary => Ok(Attribute::Binary(reader.into_vec()?)),
-                SpecialAttributeType::String => Ok(Attribute::String({
-                    String::from_utf8(reader.into_vec()?).map_err(|err| err.into_bytes())
-                })),
-            },
-        }
+impl fbxbin::v7400::VisitAttribute for AttributeVisitor {
+    type Output = Attribute;
+
+    fn expecting(&self) -> String {
+        "any attributes".to_owned()
+    }
+
+    fn visit_bool(self, v: bool) -> fbxbin::Result<Self::Output> {
+        Ok(Attribute::SingleBool(v))
+    }
+    fn visit_i16(self, v: i16) -> fbxbin::Result<Self::Output> {
+        Ok(Attribute::SingleI16(v))
+    }
+    fn visit_i32(self, v: i32) -> fbxbin::Result<Self::Output> {
+        Ok(Attribute::SingleI32(v))
+    }
+    fn visit_i64(self, v: i64) -> fbxbin::Result<Self::Output> {
+        Ok(Attribute::SingleI64(v))
+    }
+    fn visit_f32(self, v: f32) -> fbxbin::Result<Self::Output> {
+        Ok(Attribute::SingleF32(v))
+    }
+    fn visit_f64(self, v: f64) -> fbxbin::Result<Self::Output> {
+        Ok(Attribute::SingleF64(v))
+    }
+    fn visit_seq_bool(
+        self,
+        iter: impl Iterator<Item = fbxbin::Result<bool>>,
+        _: usize,
+    ) -> fbxbin::Result<Self::Output> {
+        iter.collect::<fbxbin::Result<_>>()
+            .map(Attribute::ArrayBool)
+    }
+    fn visit_seq_i32(
+        self,
+        iter: impl Iterator<Item = fbxbin::Result<i32>>,
+        _: usize,
+    ) -> fbxbin::Result<Self::Output> {
+        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayI32)
+    }
+    fn visit_seq_i64(
+        self,
+        iter: impl Iterator<Item = fbxbin::Result<i64>>,
+        _: usize,
+    ) -> fbxbin::Result<Self::Output> {
+        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayI64)
+    }
+    fn visit_seq_f32(
+        self,
+        iter: impl Iterator<Item = fbxbin::Result<f32>>,
+        _: usize,
+    ) -> fbxbin::Result<Self::Output> {
+        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayF32)
+    }
+    fn visit_seq_f64(
+        self,
+        iter: impl Iterator<Item = fbxbin::Result<f64>>,
+        _: usize,
+    ) -> fbxbin::Result<Self::Output> {
+        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayF64)
+    }
+    fn visit_binary(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
+        let mut buf = Vec::with_capacity(len as usize);
+        reader.read_to_end(&mut buf)?;
+        Ok(Attribute::Binary(buf))
+    }
+    fn visit_string(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
+        let mut buf = String::with_capacity(len as usize);
+        reader.read_to_string(&mut buf)?;
+        Ok(Attribute::String(buf))
     }
 }

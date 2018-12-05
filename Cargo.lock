@@ -71,18 +71,19 @@ dependencies = [
 name = "fbx-tree-view"
 version = "0.1.0"
 dependencies = [
- "fbxcel 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fbxcel 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gdk 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gtk 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "fbxcel"
-version = "0.0.2"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
+ "byteorder 1.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "libflate 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -270,14 +271,6 @@ dependencies = [
 
 [[package]]
 name = "log"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "log"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
@@ -343,7 +336,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum cc 1.0.25 (registry+https://github.com/rust-lang/crates.io-index)" = "f159dfd43363c4d08055a07703eb7a3406b0dac4d0584d96965a3262db3c9d16"
 "checksum cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "082bb9b28e00d3c9d39cc03e64ce4cea0f1bb9b3fde493f0cbc008472d22bdf4"
 "checksum crc32fast 1.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "e91d5240c6975ef33aeb5f148f35275c25eda8e8a5f95abe421978b05b8bf192"
-"checksum fbxcel 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f13bd462126afd181d3aaf70ca59159516a623d85441b47792fafbc603eafa4d"
+"checksum fbxcel 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "66447fd6e74941e546e6f3a44e464348398a6f9f5d26245b1de61607afb24fe7"
 "checksum fragile 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "05f8140122fa0d5dcb9fc8627cfce2b37cc1500f752636d46ea28bc26785c2f9"
 "checksum gdk 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bcc52c7244046df9d959df87289f1fc5cca23f9f850bab0c967963e2ecb83a96"
 "checksum gdk-pixbuf 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "bc3aa730cb4df3de5d9fed59f43afdf9e5fb2d3d10bfcbd04cec031435ce87f5"
@@ -359,7 +352,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a374c89b9db55895453a74c1e38861d9deec0b01b405a82516e9d5de4820dea1"
 "checksum libc 0.2.44 (registry+https://github.com/rust-lang/crates.io-index)" = "10923947f84a519a45c8fefb7dd1b3e8c08747993381adee176d7a82b4195311"
 "checksum libflate 0.1.19 (registry+https://github.com/rust-lang/crates.io-index)" = "bff3ac7d6f23730d3b533c35ed75eef638167634476a499feef16c428d74b57b"
-"checksum log 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)" = "e19e8d5c34a3e0e2223db8e060f9e8264aeeb5c5fc64a4ee9965c062211c024b"
 "checksum log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "c84ec4b527950aa83a329754b01dbe3f58361d1c5efacd1f6d68c494d08a17c6"
 "checksum pango 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4c2cb169402a3eb1ba034a7cc7d95b8b1c106e9be5ba4be79a5a93dc1a2795f4"
 "checksum pango-sys 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d6eb49268e69dd0c1da5d3001a61aac08e2e9d2bfbe4ae4b19b9963c998f6453"
