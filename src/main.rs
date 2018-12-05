@@ -12,17 +12,16 @@ use std::rc::Rc;
 use fbx::Attribute;
 use fbxcel::parser::binary as fbxbin;
 use gtk::prelude::*;
-use gtk::{Paned, Orientation, Window, WindowType};
-use gtk::{TreeStore, TreeView, ListStore};
-use gtk::{Menu, MenuItem, MenuBar};
-use gtk::{FileChooserDialog, FileChooserAction, FileFilter};
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
+use gtk::{FileChooserAction, FileChooserDialog, FileFilter};
+use gtk::{ListStore, TreeStore, TreeView};
+use gtk::{Menu, MenuBar, MenuItem};
+use gtk::{Orientation, Paned, Window, WindowType};
 
 pub mod fbx;
 
 const WINDOW_TITLE_BASE: &'static str = "FBX tree viewer";
-
 
 fn main() {
     gtk::init().expect("Failed to initialize GTK");
@@ -61,8 +60,20 @@ fn main() {
 
     {
         use gdk::enums::key;
-        menu_file_open.add_accelerator("activate", &accel_group, key::O, gdk::ModifierType::CONTROL_MASK, AccelFlags::VISIBLE);
-        menu_file_quit.add_accelerator("activate", &accel_group, key::Q, gdk::ModifierType::CONTROL_MASK, AccelFlags::VISIBLE);
+        menu_file_open.add_accelerator(
+            "activate",
+            &accel_group,
+            key::O,
+            gdk::ModifierType::CONTROL_MASK,
+            AccelFlags::VISIBLE,
+        );
+        menu_file_quit.add_accelerator(
+            "activate",
+            &accel_group,
+            key::Q,
+            gdk::ModifierType::CONTROL_MASK,
+            AccelFlags::VISIBLE,
+        );
     }
 
     //
@@ -140,11 +151,16 @@ fn main() {
     gtk::main();
 }
 
-
-fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_tree: &FbxNodeTree, node_attrs: &FbxAttributeTable) {
+fn load_fbx_binary<P: AsRef<Path>>(
+    path: P,
+    window: &Window,
+    logs: &Logs,
+    node_tree: &FbxNodeTree,
+    node_attrs: &FbxAttributeTable,
+) {
+    use fbxcel::parser::binary::Parser;
     use std::fs::File;
     use std::io::BufReader;
-    use fbxcel::parser::binary::Parser;
 
     let path = path.as_ref();
     println!("FBX binary path = {}", path.display());
@@ -160,7 +176,7 @@ fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_t
             println!("Cannot open file {}: {}", path.display(), err);
             logs.set_store(&vec![], Some(&err));
             return;
-        },
+        }
     };
     let mut parser = fbxbin::RootParser::from_seekable(BufReader::new(file));
     let mut open_nodes_iter = Vec::new();
@@ -173,14 +189,19 @@ fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_t
             Ok(Event::StartFbx(header)) => {
                 let _ = header;
                 node_tree.append(None, "(FBX header)", None, 0);
-            },
+            }
             Ok(Event::EndFbx(result)) => {
                 node_tree.append(None, "(FBX footer)", None, 0);
                 error = result.err();
                 break;
-            },
+            }
             Ok(Event::StartNode(mut header)) => {
-                let tree_iter = node_tree.append(open_nodes_iter.last(), header.name, header.attributes.num_attributes(), attr_index);
+                let tree_iter = node_tree.append(
+                    open_nodes_iter.last(),
+                    header.name,
+                    header.attributes.num_attributes(),
+                    attr_index,
+                );
                 attr_index += header.attributes.num_attributes();
                 open_nodes_iter.push(tree_iter);
                 'load_attrs: loop {
@@ -190,32 +211,38 @@ fn load_fbx_binary<P: AsRef<Path>>(path: P, window: &Window, logs: &Logs, node_t
                         Err(err) => {
                             error = Some(err);
                             break 'load_nodes;
-                        },
+                        }
                     };
                     match Attribute::read(attr) {
                         Ok(val) => node_attrs.push_attrs(val),
                         Err(err) => {
                             error = Some(err);
                             break 'load_nodes;
-                        },
+                        }
                     }
                 }
-            },
+            }
             Ok(Event::EndNode) => {
                 open_nodes_iter.pop();
-            },
+            }
             Err(err) => {
                 error = Some(err);
                 break;
-            },
+            }
         }
     }
-    logs.set_store(parser.warnings(), error.as_ref().map(|e| e as &::std::error::Error));
+    logs.set_store(
+        parser.warnings(),
+        error.as_ref().map(|e| e as &::std::error::Error),
+    );
 }
 
-
 fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> FileChooserDialog {
-    let file_chooser = FileChooserDialog::new(Some("Open FBX binary file"), window.into(), FileChooserAction::Open);
+    let file_chooser = FileChooserDialog::new(
+        Some("Open FBX binary file"),
+        window.into(),
+        FileChooserAction::Open,
+    );
     {
         let fbx_filter = FileFilter::new();
         gtk::FileFilterExt::set_name(&fbx_filter, Some("FBX files"));
@@ -236,7 +263,6 @@ fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> File
     file_chooser
 }
 
-
 #[derive(Debug, Clone)]
 struct Logs {
     pub store: TreeStore,
@@ -247,7 +273,7 @@ struct Logs {
 impl Logs {
     /// Creates a new log store and widget.
     pub fn new() -> Self {
-        use gtk::{TreeViewColumn, CellRendererText};
+        use gtk::{CellRendererText, TreeViewColumn};
 
         let column_types = &[gtk::Type::U64, gtk::Type::String, gtk::Type::String];
         let store = TreeStore::new(column_types);
@@ -295,7 +321,11 @@ impl Logs {
         }
     }
 
-    pub fn set_store<'a, W: IntoIterator<Item=&'a fbxbin::Warning>>(&self, warnings: W, error: Option<&::std::error::Error>) {
+    pub fn set_store<'a, W: IntoIterator<Item = &'a fbxbin::Warning>>(
+        &self,
+        warnings: W,
+        error: Option<&::std::error::Error>,
+    ) {
         self.clear();
         for warning in warnings {
             self.append(warning, "warning");
@@ -311,8 +341,12 @@ impl Logs {
         let mut parent = None;
         let mut i: u64 = self.num_entries.get();
         loop {
-
-            parent = Some(self.store.insert_with_values(parent.as_ref(), None, &[0, 1, 2], &[&i, &severity, &target.to_string()]));
+            parent = Some(self.store.insert_with_values(
+                parent.as_ref(),
+                None,
+                &[0, 1, 2],
+                &[&i, &severity, &target.to_string()],
+            ));
             i += 1;
             match target.cause() {
                 Some(err) => target = err,
@@ -329,7 +363,6 @@ impl Logs {
     }
 }
 
-
 #[derive(Debug, Clone)]
 struct FbxNodeTree {
     pub store: TreeStore,
@@ -339,7 +372,7 @@ struct FbxNodeTree {
 impl FbxNodeTree {
     /// Creates a new fbx ndoes store and widget.
     pub fn new() -> Self {
-        use gtk::{TreeViewColumn, CellRendererText};
+        use gtk::{CellRendererText, TreeViewColumn};
 
         // node name, # of attributes, index of attribute.
         let column_types = &[gtk::Type::String, gtk::Type::U64, gtk::Type::U64];
@@ -376,26 +409,37 @@ impl FbxNodeTree {
     /// Connect events.
     pub fn initialize(&self, node_attrs: &FbxAttributeTable) {
         let node_attrs = node_attrs.clone();
-        self.widget.get_selection().connect_changed(move |selection| {
-            let (paths, model) = selection.get_selected_rows();
-            let descendant_path = match paths.last() {
-                Some(path) => path,
-                None => {
-                    println!("selection has changed but paths is empty");
-                    return;
-                },
-            };
-            let tree_iter = match model.get_iter(descendant_path) {
-                Some(iter) => iter,
-                None => {
-                    println!("selection has changed but tree_iter is invalid for path {:?}", descendant_path);
-                    return;
-                },
-            };
-            let num_attrs = model.get_value(&tree_iter, 1).get::<u64>().expect("column[1] of `FbxAttributeTable` is not u64");
-            let attrs_index = model.get_value(&tree_iter, 2).get::<u64>().expect("column[2] of `FbxAttributeTable` is not u64");
-            node_attrs.show_attrs(attrs_index, num_attrs);
-        });
+        self.widget
+            .get_selection()
+            .connect_changed(move |selection| {
+                let (paths, model) = selection.get_selected_rows();
+                let descendant_path = match paths.last() {
+                    Some(path) => path,
+                    None => {
+                        println!("selection has changed but paths is empty");
+                        return;
+                    }
+                };
+                let tree_iter = match model.get_iter(descendant_path) {
+                    Some(iter) => iter,
+                    None => {
+                        println!(
+                            "selection has changed but tree_iter is invalid for path {:?}",
+                            descendant_path
+                        );
+                        return;
+                    }
+                };
+                let num_attrs = model
+                    .get_value(&tree_iter, 1)
+                    .get::<u64>()
+                    .expect("column[1] of `FbxAttributeTable` is not u64");
+                let attrs_index = model
+                    .get_value(&tree_iter, 2)
+                    .get::<u64>()
+                    .expect("column[2] of `FbxAttributeTable` is not u64");
+                node_attrs.show_attrs(attrs_index, num_attrs);
+            });
     }
 
     /// Clears internal store.
@@ -403,11 +447,21 @@ impl FbxNodeTree {
         self.store.clear();
     }
 
-    fn append<N: Into<Option<u64>>>(&self, parent: Option<&gtk::TreeIter>, name: &str, num_attrs: N, attr_index: u64) -> gtk::TreeIter {
-        self.store.insert_with_values(parent, None, &[0, 1, 2], &[&name, num_attrs.into().as_ref().unwrap_or(&0), &attr_index])
+    fn append<N: Into<Option<u64>>>(
+        &self,
+        parent: Option<&gtk::TreeIter>,
+        name: &str,
+        num_attrs: N,
+        attr_index: u64,
+    ) -> gtk::TreeIter {
+        self.store.insert_with_values(
+            parent,
+            None,
+            &[0, 1, 2],
+            &[&name, num_attrs.into().as_ref().unwrap_or(&0), &attr_index],
+        )
     }
 }
-
 
 #[derive(Debug, Clone)]
 struct FbxAttributeTable {
@@ -419,7 +473,7 @@ struct FbxAttributeTable {
 impl FbxAttributeTable {
     /// Creates a new fbx ndoes store and widget.
     pub fn new() -> Self {
-        use gtk::{TreeViewColumn, CellRendererText};
+        use gtk::{CellRendererText, TreeViewColumn};
 
         // index, type, value.
         let column_types = &[gtk::Type::U64, gtk::Type::String, gtk::Type::String];
@@ -458,10 +512,6 @@ impl FbxAttributeTable {
             column.set_resizable(true);
             widget.append_column(&column);
         }
-        //widget.get_selection().connect_changed(|selection| {
-            //let (paths, model) = selection.get_selected_rows();
-            //println!("row selected: {:?}", paths);
-        //});
 
         FbxAttributeTable {
             store: store,
@@ -482,12 +532,17 @@ impl FbxAttributeTable {
 
     fn show_attrs(&self, attrs_index: u64, num_attrs: u64) {
         self.store.clear();
-        for (local_index, attr) in self.attrs.borrow()[attrs_index as usize..(attrs_index + num_attrs) as usize].iter().enumerate() {
+        for (local_index, attr) in self.attrs.borrow()
+            [attrs_index as usize..(attrs_index + num_attrs) as usize]
+            .iter()
+            .enumerate()
+        {
             self.append_store(local_index as u64, attr.type_string(), &attr.value_string());
         }
     }
 
     fn append_store(&self, index: u64, typename: &str, value: &str) -> gtk::TreeIter {
-        self.store.insert_with_values(None, &[0, 1, 2], &[&index, &typename, &value])
+        self.store
+            .insert_with_values(None, &[0, 1, 2], &[&index, &typename, &value])
     }
 }

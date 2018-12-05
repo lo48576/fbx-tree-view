@@ -2,7 +2,6 @@
 
 use fbxcel::parser::binary as fbxbin;
 
-
 /// FBX node attribute.
 #[derive(Debug, Clone)]
 pub enum Attribute {
@@ -65,87 +64,131 @@ impl Attribute {
             Attribute::SingleI64(val) => val.to_string(),
             Attribute::SingleF32(val) => val.to_string(),
             Attribute::SingleF64(val) => val.to_string(),
-            Attribute::ArrayBool(ref arr) => {
-                arr.iter().enumerate().map(|(i, &val)| match (i & 0x0f == 0x0f, val) {
+            Attribute::ArrayBool(ref arr) => arr
+                .iter()
+                .enumerate()
+                .map(|(i, &val)| match (i & 0x0f == 0x0f, val) {
                     (false, false) => "0, ",
                     (false, true) => "1, ",
                     (true, false) => "0,\n",
                     (true, true) => "1,\n",
-                }).collect()
-            },
-            Attribute::ArrayI32(ref arr) => {
-                arr.iter().enumerate().map(|(i, &val)| if i & 0x0f == 0x0f {
-                    format!("{},\n", val)
-                } else {
-                    format!("{}, ", val)
-                }).collect()
-            },
-            Attribute::ArrayI64(ref arr) => {
-                arr.iter().enumerate().map(|(i, &val)| if i & 0x0f == 0x0f {
-                    format!("{},\n", val)
-                } else {
-                    format!("{}, ", val)
-                }).collect()
-            },
-            Attribute::ArrayF32(ref arr) => {
-                arr.iter().enumerate().map(|(i, &val)| if i & 0x0f == 0x0f {
-                    format!("{},\n", val)
-                } else {
-                    format!("{}, ", val)
-                }).collect()
-            },
-            Attribute::ArrayF64(ref arr) => {
-                arr.iter().enumerate().map(|(i, &val)| if i & 0x0f == 0x0f {
-                    format!("{},\n", val)
-                } else {
-                    format!("{}, ", val)
-                }).collect()
-            },
-            Attribute::String(Ok(ref val)) => {
-                val.chars().fold(String::with_capacity(val.len()), |mut s, c| {
-                    match c {
-                        '\n' | '\t' => s.push(c),
-                        '\r' => s.push_str("\\r"),
-                        _ if (c <= '\x1f') || (c == '\x7f') => s.push_str(&format!("\\x{:02x}", c as u32)),
-                        c => s.push(c),
-                    }
-                    s
                 })
+                .collect(),
+            Attribute::ArrayI32(ref arr) => arr
+                .iter()
+                .enumerate()
+                .map(|(i, &val)| {
+                    if i & 0x0f == 0x0f {
+                        format!("{},\n", val)
+                    } else {
+                        format!("{}, ", val)
+                    }
+                })
+                .collect(),
+            Attribute::ArrayI64(ref arr) => arr
+                .iter()
+                .enumerate()
+                .map(|(i, &val)| {
+                    if i & 0x0f == 0x0f {
+                        format!("{},\n", val)
+                    } else {
+                        format!("{}, ", val)
+                    }
+                })
+                .collect(),
+            Attribute::ArrayF32(ref arr) => arr
+                .iter()
+                .enumerate()
+                .map(|(i, &val)| {
+                    if i & 0x0f == 0x0f {
+                        format!("{},\n", val)
+                    } else {
+                        format!("{}, ", val)
+                    }
+                })
+                .collect(),
+            Attribute::ArrayF64(ref arr) => arr
+                .iter()
+                .enumerate()
+                .map(|(i, &val)| {
+                    if i & 0x0f == 0x0f {
+                        format!("{},\n", val)
+                    } else {
+                        format!("{}, ", val)
+                    }
+                })
+                .collect(),
+            Attribute::String(Ok(ref val)) => {
+                val.chars()
+                    .fold(String::with_capacity(val.len()), |mut s, c| {
+                        match c {
+                            '\n' | '\t' => s.push(c),
+                            '\r' => s.push_str("\\r"),
+                            _ if (c <= '\x1f') || (c == '\x7f') => {
+                                s.push_str(&format!("\\x{:02x}", c as u32))
+                            }
+                            c => s.push(c),
+                        }
+                        s
+                    })
             }
-            Attribute::String(Err(ref arr)) |
-            Attribute::Binary(ref arr) => {
-                arr.iter().enumerate().map(|(i, &val)| if i & 0x0f == 0x0f {
-                    format!("{:02x},\n", val)
-                } else {
-                    format!("{:02x}, ", val)
-                }).collect()
-            },
+            Attribute::String(Err(ref arr)) | Attribute::Binary(ref arr) => arr
+                .iter()
+                .enumerate()
+                .map(|(i, &val)| {
+                    if i & 0x0f == 0x0f {
+                        format!("{:02x},\n", val)
+                    } else {
+                        format!("{:02x}, ", val)
+                    }
+                })
+                .collect(),
         }
     }
 
     /// Reads attribute in parser event into `Attribute`.
     pub fn read<R: fbxbin::ParserSource>(attr: fbxbin::Attribute<R>) -> fbxbin::Result<Self> {
-        use fbxcel::parser::binary::{PrimitiveAttribute, ArrayAttribute, SpecialAttributeType};
+        use fbxcel::parser::binary::{ArrayAttribute, PrimitiveAttribute, SpecialAttributeType};
 
         match attr {
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::Bool(val)) => Ok(Attribute::SingleBool(val)),
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::I16(val)) => Ok(Attribute::SingleI16(val)),
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::I32(val)) => Ok(Attribute::SingleI32(val)),
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::I64(val)) => Ok(Attribute::SingleI64(val)),
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::F32(val)) => Ok(Attribute::SingleF32(val)),
-            fbxbin::Attribute::Primitive(PrimitiveAttribute::F64(val)) => Ok(Attribute::SingleF64(val)),
-            fbxbin::Attribute::Array(ArrayAttribute::Bool(arr)) => Ok(Attribute::ArrayBool(arr.into_vec()?)),
-            fbxbin::Attribute::Array(ArrayAttribute::I32(arr)) => Ok(Attribute::ArrayI32(arr.into_vec()?)),
-            fbxbin::Attribute::Array(ArrayAttribute::I64(arr)) => Ok(Attribute::ArrayI64(arr.into_vec()?)),
-            fbxbin::Attribute::Array(ArrayAttribute::F32(arr)) => Ok(Attribute::ArrayF32(arr.into_vec()?)),
-            fbxbin::Attribute::Array(ArrayAttribute::F64(arr)) => Ok(Attribute::ArrayF64(arr.into_vec()?)),
-            fbxbin::Attribute::Special(reader) => {
-                match reader.value_type() {
-                    SpecialAttributeType::Binary => Ok(Attribute::Binary(reader.into_vec()?)),
-                    SpecialAttributeType::String => Ok(Attribute::String({
-                        String::from_utf8(reader.into_vec()?).map_err(|err| err.into_bytes())
-                    })),
-                }
+            fbxbin::Attribute::Primitive(PrimitiveAttribute::Bool(val)) => {
+                Ok(Attribute::SingleBool(val))
+            }
+            fbxbin::Attribute::Primitive(PrimitiveAttribute::I16(val)) => {
+                Ok(Attribute::SingleI16(val))
+            }
+            fbxbin::Attribute::Primitive(PrimitiveAttribute::I32(val)) => {
+                Ok(Attribute::SingleI32(val))
+            }
+            fbxbin::Attribute::Primitive(PrimitiveAttribute::I64(val)) => {
+                Ok(Attribute::SingleI64(val))
+            }
+            fbxbin::Attribute::Primitive(PrimitiveAttribute::F32(val)) => {
+                Ok(Attribute::SingleF32(val))
+            }
+            fbxbin::Attribute::Primitive(PrimitiveAttribute::F64(val)) => {
+                Ok(Attribute::SingleF64(val))
+            }
+            fbxbin::Attribute::Array(ArrayAttribute::Bool(arr)) => {
+                Ok(Attribute::ArrayBool(arr.into_vec()?))
+            }
+            fbxbin::Attribute::Array(ArrayAttribute::I32(arr)) => {
+                Ok(Attribute::ArrayI32(arr.into_vec()?))
+            }
+            fbxbin::Attribute::Array(ArrayAttribute::I64(arr)) => {
+                Ok(Attribute::ArrayI64(arr.into_vec()?))
+            }
+            fbxbin::Attribute::Array(ArrayAttribute::F32(arr)) => {
+                Ok(Attribute::ArrayF32(arr.into_vec()?))
+            }
+            fbxbin::Attribute::Array(ArrayAttribute::F64(arr)) => {
+                Ok(Attribute::ArrayF64(arr.into_vec()?))
+            }
+            fbxbin::Attribute::Special(reader) => match reader.value_type() {
+                SpecialAttributeType::Binary => Ok(Attribute::Binary(reader.into_vec()?)),
+                SpecialAttributeType::String => Ok(Attribute::String({
+                    String::from_utf8(reader.into_vec()?).map_err(|err| err.into_bytes())
+                })),
             },
         }
     }
