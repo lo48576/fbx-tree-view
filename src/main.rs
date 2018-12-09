@@ -21,7 +21,7 @@ use gtk::{Orientation, Paned, Window, WindowType};
 
 pub mod fbx;
 
-const WINDOW_TITLE_BASE: &'static str = "FBX tree viewer";
+const WINDOW_TITLE_BASE: &str = "FBX tree viewer";
 
 fn main() {
     gtk::init().expect("Failed to initialize GTK");
@@ -309,8 +309,8 @@ impl Logs {
         }
 
         Logs {
-            store: store,
-            widget: widget,
+            store,
+            widget,
             num_entries: Rc::new(Cell::new(0)),
         }
     }
@@ -394,10 +394,7 @@ impl FbxNodeTree {
             widget.append_column(&column);
         }
 
-        FbxNodeTree {
-            store: store,
-            widget: widget,
-        }
+        FbxNodeTree { store, widget }
     }
 
     /// Connect events.
@@ -508,8 +505,8 @@ impl FbxAttributeTable {
         }
 
         FbxAttributeTable {
-            store: store,
-            widget: widget,
+            store,
+            widget,
             attrs: Rc::new(RefCell::new(Vec::new())),
         }
     }
