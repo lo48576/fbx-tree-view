@@ -7,7 +7,7 @@ readme = "README.md"
 description = "GUI viewer of FBX tree structure"
 
 [dependencies]
-fbxcel = "0.0.2"
+fbxcel = "0.1.0"
 gdk = "0.9.0"
 
 [dependencies.gtk]

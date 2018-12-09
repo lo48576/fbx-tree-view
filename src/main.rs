@@ -10,7 +10,7 @@ use std::path::Path;
 use std::rc::Rc;
 
 use fbx::Attribute;
-use fbxcel::parser::binary as fbxbin;
+use fbxcel::pull_parser as fbxbin;
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
@@ -158,7 +158,6 @@ fn load_fbx_binary<P: AsRef<Path>>(
     node_tree: &FbxNodeTree,
     node_attrs: &FbxAttributeTable,
 ) {
-    use fbxcel::parser::binary::Parser;
     use std::fs::File;
     use std::io::BufReader;
 
@@ -170,71 +169,66 @@ fn load_fbx_binary<P: AsRef<Path>>(
     node_tree.clear();
     node_attrs.clear();
 
-    let file = match File::open(path) {
-        Ok(file) => file,
+    let mut file = match File::open(path) {
+        Ok(file) => BufReader::new(file),
         Err(err) => {
             println!("Cannot open file {}: {}", path.display(), err);
             logs.set_store(&vec![], Some(&err));
             return;
         }
     };
-    let mut parser = fbxbin::RootParser::from_seekable(BufReader::new(file));
-    let mut open_nodes_iter = Vec::new();
-    let mut attr_index = 0;
-    let error;
-    'load_nodes: loop {
-        use fbxcel::parser::binary::Event;
+    let header = match fbxcel::low::FbxHeader::read_fbx_header(&mut file) {
+        Ok(header) => header,
+        Err(err) => {
+            println!("Cannot open file {} as FBX binary: {}", path.display(), err);
+            logs.set_store(&vec![], Some(&err));
+            return;
+        }
+    };
+    node_tree.append(None, "(FBX header)", None, 0);
 
-        match parser.next_event() {
-            Ok(Event::StartFbx(header)) => {
-                let _ = header;
-                node_tree.append(None, "(FBX header)", None, 0);
-            }
-            Ok(Event::EndFbx(result)) => {
-                node_tree.append(None, "(FBX footer)", None, 0);
-                error = result.err();
-                break;
-            }
-            Ok(Event::StartNode(mut header)) => {
-                let tree_iter = node_tree.append(
-                    open_nodes_iter.last(),
-                    header.name,
-                    header.attributes.num_attributes(),
-                    attr_index,
-                );
-                attr_index += header.attributes.num_attributes();
-                open_nodes_iter.push(tree_iter);
-                'load_attrs: loop {
-                    let attr = match header.attributes.next_attribute() {
-                        Ok(Some(val)) => val,
-                        Ok(None) => break 'load_attrs,
-                        Err(err) => {
-                            error = Some(err);
-                            break 'load_nodes;
-                        }
-                    };
-                    match Attribute::read(attr) {
-                        Ok(val) => node_attrs.push_attrs(val),
-                        Err(err) => {
-                            error = Some(err);
-                            break 'load_nodes;
-                        }
+    println!(
+        "FBX version: {}.{}",
+        header.version().major(),
+        header.version().minor()
+    );
+
+    let parser_version = match header.parser_version() {
+        Some(v) => v,
+        None => {
+            let ver = format!("{}.{}", header.version().major(), header.version().minor());
+            println!("Unsupported FBX version: {}", ver);
+            let err: Box<std::error::Error> = format!("Unsupported FBX version: {}", ver).into();
+            logs.set_store(&vec![], Some(err.as_ref()));
+            return;
+        }
+    };
+    match parser_version {
+        fbxbin::ParserVersion::V7400 => {
+            let mut parser = fbxbin::v7400::from_seekable_reader(header, file)
+                .expect("Should never fail: Unsupported FBX verison");
+            let warnings = Rc::new(RefCell::new(Vec::new()));
+            {
+                let warnings = Rc::downgrade(&warnings);
+                parser.set_warning_handler(move |warning| {
+                    if let Some(rc) = warnings.upgrade() {
+                        rc.borrow_mut().push(warning);
                     }
+                    Ok(())
+                });
+            }
+            match load_fbx_binary_v7400(parser, node_tree, node_attrs) {
+                Ok(()) => {
+                    logs.set_store(warnings.borrow().iter(), None);
                 }
-            }
-            Ok(Event::EndNode) => {
-                open_nodes_iter.pop();
-            }
-            Err(err) => {
-                error = Some(err);
-                break;
+                Err(err) => {
+                    println!("Failed to parse FBX file: {}", err);
+                    logs.set_store(warnings.borrow().iter(), Some(&err));
+                    return;
+                }
             }
         }
     }
-    logs.set_store(
-        parser.warnings(),
-        error.as_ref().map(|e| e as &::std::error::Error),
-    );
 }
 
 fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> FileChooserDialog {
@@ -545,4 +539,45 @@ impl FbxAttributeTable {
         self.store
             .insert_with_values(None, &[0, 1, 2], &[&index, &typename, &value])
     }
+}
+
+fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
+    mut parser: fbxbin::v7400::Parser<R>,
+    node_tree: &FbxNodeTree,
+    node_attrs: &FbxAttributeTable,
+) -> fbxbin::Result<()> {
+    let mut open_nodes_iter = Vec::new();
+    let mut attr_index = 0;
+
+    'load_nodes: loop {
+        use fbxbin::v7400::*;
+
+        match parser.next_event()? {
+            Event::StartNode(node) => {
+                let name = node.name().to_owned();
+                let mut attributes = node.attributes();
+                let tree_iter = node_tree.append(
+                    open_nodes_iter.last(),
+                    &name,
+                    attributes.total_count(),
+                    attr_index,
+                );
+                attr_index += attributes.total_count();
+                open_nodes_iter.push(tree_iter);
+                while let Some(attr) = attributes.visit_next(fbx::AttributeVisitor)? {
+                    node_attrs.push_attrs(attr);
+                }
+            }
+            Event::EndNode => {
+                open_nodes_iter.pop();
+            }
+            Event::EndFbx(footer_res) => {
+                node_tree.append(None, "(FBX footer)", None, 0);
+                let _ = footer_res?;
+                break 'load_nodes;
+            }
+        }
+    }
+
+    Ok(())
 }
