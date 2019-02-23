@@ -81,7 +81,7 @@ fn main() {
     //
 
     let node_tree = FbxNodeTree::new();
-    let scrolled_node_tree = ScrolledWindow::new(None, None);
+    let scrolled_node_tree = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
     scrolled_node_tree.add(&node_tree.widget);
 
     //
@@ -89,7 +89,7 @@ fn main() {
     //
 
     let node_attrs = FbxAttributeTable::new();
-    let scrolled_node_attrs = ScrolledWindow::new(None, None);
+    let scrolled_node_attrs = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
     scrolled_node_attrs.add(&node_attrs.widget);
 
     node_tree.initialize(&node_attrs);
@@ -108,7 +108,7 @@ fn main() {
     //
 
     let logs = Logs::new();
-    let scrolled_logs = ScrolledWindow::new(None, None);
+    let scrolled_logs = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
     scrolled_logs.add(&logs.widget);
 
     //
@@ -239,14 +239,14 @@ fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> File
     );
     {
         let fbx_filter = FileFilter::new();
-        gtk::FileFilterExt::set_name(&fbx_filter, Some("FBX files"));
+        fbx_filter.set_name(Some("FBX files"));
         fbx_filter.add_pattern("*.fbx");
         fbx_filter.add_pattern("*.FBX");
         file_chooser.add_filter(&fbx_filter);
     }
     {
         let all_filter = FileFilter::new();
-        gtk::FileFilterExt::set_name(&all_filter, Some("All files"));
+        all_filter.set_name(Some("All files"));
         all_filter.add_pattern("*");
         file_chooser.add_filter(&all_filter);
     }
