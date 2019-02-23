@@ -9,7 +9,7 @@ use std::cell::{Cell, RefCell};
 use std::path::Path;
 use std::rc::Rc;
 
-use fbx::Attribute;
+use crate::fbx::Attribute;
 use fbxcel::pull_parser as fbxbin;
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
@@ -576,7 +576,7 @@ fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
     let mut attr_index = 0;
 
     'load_nodes: loop {
-        use fbxbin::v7400::*;
+        use crate::fbxbin::v7400::*;
 
         match parser.next_event()? {
             Event::StartNode(node) => {
