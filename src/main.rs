@@ -251,8 +251,8 @@ fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> File
         file_chooser.add_filter(&all_filter);
     }
     file_chooser.add_buttons(&[
-        ("Cancel", gtk::ResponseType::Cancel.into()),
-        ("Open", gtk::ResponseType::Ok.into()),
+        ("Cancel", gtk::ResponseType::Cancel),
+        ("Open", gtk::ResponseType::Ok),
     ]);
     file_chooser
 }
