@@ -210,9 +210,9 @@ fn load_fbx_binary<P: AsRef<Path>>(
             let warnings = Rc::new(RefCell::new(Vec::new()));
             {
                 let warnings = Rc::downgrade(&warnings);
-                parser.set_warning_handler(move |warning| {
+                parser.set_warning_handler(move |warning, syn_pos| {
                     if let Some(rc) = warnings.upgrade() {
-                        rc.borrow_mut().push(warning);
+                        rc.borrow_mut().push((warning, syn_pos.clone()));
                     }
                     Ok(())
                 });
@@ -269,7 +269,13 @@ impl Logs {
     pub fn new() -> Self {
         use gtk::{CellRendererText, TreeViewColumn};
 
-        let column_types = &[gtk::Type::U64, gtk::Type::String, gtk::Type::String];
+        // Error and warning index, severity, description, syntactic position
+        let column_types = &[
+            gtk::Type::U64,
+            gtk::Type::String,
+            gtk::Type::String,
+            gtk::Type::String,
+        ];
         let store = TreeStore::new(column_types);
         let widget = TreeView::new_with_model(&store);
         widget.set_headers_visible(true);
@@ -307,6 +313,17 @@ impl Logs {
             column.set_sort_column_id(2);
             widget.append_column(&column);
         }
+        {
+            let column = TreeViewColumn::new();
+            let cell = CellRendererText::new();
+            column.pack_start(&cell, true);
+            column.set_title("position");
+            column.add_attribute(&cell, "text", 3);
+            column.set_clickable(true);
+            column.set_resizable(true);
+            column.set_sort_column_id(3);
+            widget.append_column(&column);
+        }
 
         Logs {
             store,
@@ -315,31 +332,43 @@ impl Logs {
         }
     }
 
-    pub fn set_store<'a, W: IntoIterator<Item = &'a fbxbin::Warning>>(
+    pub fn set_store<
+        'a,
+        W: IntoIterator<Item = &'a (fbxbin::Warning, fbxbin::SyntacticPosition)>,
+    >(
         &self,
         warnings: W,
-        error: Option<&::std::error::Error>,
+        error: Option<&(::std::error::Error + 'static)>,
     ) {
         self.clear();
-        for warning in warnings {
-            self.append(warning, "warning");
+        for (warning, syn_pos) in warnings {
+            self.append(warning, Some(syn_pos), "warning");
         }
 
         if let Some(err) = error {
-            self.append(err, "Error");
+            let syn_pos = err
+                .downcast_ref::<fbxbin::Error>()
+                .and_then(|parser_error| parser_error.position());
+            self.append(err, syn_pos, "Error");
         }
     }
 
-    fn append(&self, err: &::std::error::Error, severity: &str) {
+    fn append(
+        &self,
+        err: &::std::error::Error,
+        syn_pos: Option<&fbxbin::SyntacticPosition>,
+        severity: &str,
+    ) {
         let mut target = err;
         let mut parent = None;
         let mut i: u64 = self.num_entries.get();
         loop {
+            let syn_pos = syn_pos.map_or_else(String::new, |pos| format!("{:?}", pos));
             parent = Some(self.store.insert_with_values(
                 parent.as_ref(),
                 None,
-                &[0, 1, 2],
-                &[&i, &severity, &target.to_string()],
+                &[0, 1, 2, 3],
+                &[&i, &severity, &target.to_string(), &syn_pos],
             ));
             i += 1;
             match target.cause() {
