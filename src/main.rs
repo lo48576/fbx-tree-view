@@ -198,7 +198,7 @@ fn load_fbx_binary<P: AsRef<Path>>(
         None => {
             let ver = format!("{}.{}", header.version().major(), header.version().minor());
             println!("Unsupported FBX version: {}", ver);
-            let err: Box<std::error::Error> = format!("Unsupported FBX version: {}", ver).into();
+            let err: Box<dyn std::error::Error> = format!("Unsupported FBX version: {}", ver).into();
             logs.set_store(&vec![], Some(err.as_ref()));
             return;
         }
@@ -338,7 +338,7 @@ impl Logs {
     >(
         &self,
         warnings: W,
-        error: Option<&(::std::error::Error + 'static)>,
+        error: Option<&(dyn std::error::Error + 'static)>,
     ) {
         self.clear();
         for (warning, syn_pos) in warnings {
@@ -355,7 +355,7 @@ impl Logs {
 
     fn append(
         &self,
-        err: &::std::error::Error,
+        err: &dyn std::error::Error,
         syn_pos: Option<&fbxbin::SyntacticPosition>,
         severity: &str,
     ) {
