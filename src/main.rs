@@ -14,12 +14,10 @@ use gtk::prelude::*;
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
 use gtk::{FileChooserAction, FileChooserDialog, FileFilter};
-use gtk::{ListStore, TreeView};
 use gtk::{Menu, MenuBar, MenuItem};
 use gtk::{Orientation, Paned, Window, WindowType};
 
-use crate::fbx::Attribute;
-use crate::widgets::{FbxNodeTree, Logs};
+use crate::widgets::{FbxAttributeTable, FbxNodeTree, Logs};
 
 pub mod fbx;
 pub mod widgets;
@@ -93,7 +91,7 @@ fn main() {
 
     let node_attrs = FbxAttributeTable::new();
     let scrolled_node_attrs = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
-    scrolled_node_attrs.add(&node_attrs.widget);
+    scrolled_node_attrs.add(node_attrs.widget());
 
     node_tree.initialize(&node_attrs);
 
@@ -260,91 +258,6 @@ fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> File
     file_chooser
 }
 
-/// FBX attributes table.
-#[derive(Debug, Clone)]
-pub struct FbxAttributeTable {
-    pub store: ListStore,
-    pub widget: TreeView,
-    attrs: Rc<RefCell<Vec<Attribute>>>,
-}
-
-impl FbxAttributeTable {
-    /// Creates a new fbx ndoes store and widget.
-    pub fn new() -> Self {
-        use gtk::{CellRendererText, TreeViewColumn};
-
-        // index, type, value.
-        let column_types = &[gtk::Type::U64, gtk::Type::String, gtk::Type::String];
-        let store = ListStore::new(column_types);
-        let widget = TreeView::new_with_model(&store);
-        widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);
-        widget.set_enable_tree_lines(true);
-        widget.set_headers_visible(true);
-        {
-            let column = TreeViewColumn::new();
-            let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
-            column.set_title("#");
-            column.add_attribute(&cell, "text", 0);
-            column.set_clickable(true);
-            column.set_sort_column_id(0);
-            widget.append_column(&column);
-        }
-        {
-            let column = TreeViewColumn::new();
-            let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
-            column.set_title("type");
-            column.add_attribute(&cell, "text", 1);
-            column.set_clickable(true);
-            column.set_resizable(true);
-            column.set_sort_column_id(1);
-            widget.append_column(&column);
-        }
-        {
-            let column = TreeViewColumn::new();
-            let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
-            column.set_title("value");
-            column.add_attribute(&cell, "text", 2);
-            column.set_resizable(true);
-            widget.append_column(&column);
-        }
-
-        FbxAttributeTable {
-            store,
-            widget,
-            attrs: Rc::new(RefCell::new(Vec::new())),
-        }
-    }
-
-    /// Clears internal store.
-    pub fn clear(&self) {
-        self.store.clear();
-        self.attrs.borrow_mut().clear();
-    }
-
-    fn push_attrs(&self, attr: Attribute) {
-        self.attrs.borrow_mut().push(attr);
-    }
-
-    fn show_attrs(&self, attrs_index: u64, num_attrs: u64) {
-        self.store.clear();
-        for (local_index, attr) in self.attrs.borrow()
-            [attrs_index as usize..(attrs_index + num_attrs) as usize]
-            .iter()
-            .enumerate()
-        {
-            self.append_store(local_index as u64, attr.type_string(), &attr.value_string());
-        }
-    }
-
-    fn append_store(&self, index: u64, typename: &str, value: &str) -> gtk::TreeIter {
-        self.store
-            .insert_with_values(None, &[0, 1, 2], &[&index, &typename, &value])
-    }
-}
-
 fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
     mut parser: fbxbin::v7400::Parser<R>,
     node_tree: &FbxNodeTree,
@@ -369,7 +282,7 @@ fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
                 attr_index += attributes.total_count();
                 open_nodes_iter.push(tree_iter);
                 while let Some(attr) = attributes.load_next(fbx::AttributeLoader)? {
-                    node_attrs.push_attrs(attr);
+                    node_attrs.push_attribute(attr);
                 }
             }
             Event::EndNode => {
