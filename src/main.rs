@@ -372,7 +372,7 @@ impl Logs {
                 &[&i, &severity, &target.to_string(), &syn_pos],
             ));
             i += 1;
-            match target.cause() {
+            match target.source() {
                 Some(err) => target = err,
                 None => break,
             }
