@@ -9,7 +9,6 @@ use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
 
-use crate::fbx::Attribute;
 use fbxcel::pull_parser::{self as fbxbin, any::AnyParser};
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
@@ -18,6 +17,8 @@ use gtk::{FileChooserAction, FileChooserDialog, FileFilter};
 use gtk::{ListStore, TreeStore, TreeView};
 use gtk::{Menu, MenuBar, MenuItem};
 use gtk::{Orientation, Paned, Window, WindowType};
+
+use crate::fbx::Attribute;
 
 use self::logs::Logs;
 
