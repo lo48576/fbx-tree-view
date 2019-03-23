@@ -229,7 +229,12 @@ fn load_fbx_binary<P: AsRef<Path>>(
                 }
             }
         }
-        v => panic!("Unsupported parser version: {:?}", v),
+        v => {
+            let err: Box<dyn std::error::Error> =
+                format!("Unsupported parser version: {:?}", v).into();
+            logs.set_store(&[], Some(err.as_ref()));
+            return;
+        }
     }
 }
 
