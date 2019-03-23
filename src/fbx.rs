@@ -147,36 +147,36 @@ impl Attribute {
     }
 }
 
-/// FBX 7.4 attribute visitor.
+/// FBX 7.4 attribute loader.
 #[derive(Debug, Clone)]
-pub struct AttributeVisitor;
+pub struct AttributeLoader;
 
-impl fbxbin::v7400::VisitAttribute for AttributeVisitor {
+impl fbxbin::v7400::LoadAttribute for AttributeLoader {
     type Output = Attribute;
 
     fn expecting(&self) -> String {
         "any attributes".to_owned()
     }
 
-    fn visit_bool(self, v: bool) -> fbxbin::Result<Self::Output> {
+    fn load_bool(self, v: bool) -> fbxbin::Result<Self::Output> {
         Ok(Attribute::SingleBool(v))
     }
-    fn visit_i16(self, v: i16) -> fbxbin::Result<Self::Output> {
+    fn load_i16(self, v: i16) -> fbxbin::Result<Self::Output> {
         Ok(Attribute::SingleI16(v))
     }
-    fn visit_i32(self, v: i32) -> fbxbin::Result<Self::Output> {
+    fn load_i32(self, v: i32) -> fbxbin::Result<Self::Output> {
         Ok(Attribute::SingleI32(v))
     }
-    fn visit_i64(self, v: i64) -> fbxbin::Result<Self::Output> {
+    fn load_i64(self, v: i64) -> fbxbin::Result<Self::Output> {
         Ok(Attribute::SingleI64(v))
     }
-    fn visit_f32(self, v: f32) -> fbxbin::Result<Self::Output> {
+    fn load_f32(self, v: f32) -> fbxbin::Result<Self::Output> {
         Ok(Attribute::SingleF32(v))
     }
-    fn visit_f64(self, v: f64) -> fbxbin::Result<Self::Output> {
+    fn load_f64(self, v: f64) -> fbxbin::Result<Self::Output> {
         Ok(Attribute::SingleF64(v))
     }
-    fn visit_seq_bool(
+    fn load_seq_bool(
         self,
         iter: impl Iterator<Item = fbxbin::Result<bool>>,
         _: usize,
@@ -184,40 +184,40 @@ impl fbxbin::v7400::VisitAttribute for AttributeVisitor {
         iter.collect::<fbxbin::Result<_>>()
             .map(Attribute::ArrayBool)
     }
-    fn visit_seq_i32(
+    fn load_seq_i32(
         self,
         iter: impl Iterator<Item = fbxbin::Result<i32>>,
         _: usize,
     ) -> fbxbin::Result<Self::Output> {
         iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayI32)
     }
-    fn visit_seq_i64(
+    fn load_seq_i64(
         self,
         iter: impl Iterator<Item = fbxbin::Result<i64>>,
         _: usize,
     ) -> fbxbin::Result<Self::Output> {
         iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayI64)
     }
-    fn visit_seq_f32(
+    fn load_seq_f32(
         self,
         iter: impl Iterator<Item = fbxbin::Result<f32>>,
         _: usize,
     ) -> fbxbin::Result<Self::Output> {
         iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayF32)
     }
-    fn visit_seq_f64(
+    fn load_seq_f64(
         self,
         iter: impl Iterator<Item = fbxbin::Result<f64>>,
         _: usize,
     ) -> fbxbin::Result<Self::Output> {
         iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayF64)
     }
-    fn visit_binary(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
+    fn load_binary(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
         let mut buf = Vec::with_capacity(len as usize);
         reader.read_to_end(&mut buf)?;
         Ok(Attribute::Binary(buf))
     }
-    fn visit_string(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
+    fn load_string(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
         let mut buf = String::with_capacity(len as usize);
         reader.read_to_string(&mut buf)?;
         Ok(Attribute::String(buf))
