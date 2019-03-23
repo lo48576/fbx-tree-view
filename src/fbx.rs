@@ -1,12 +1,9 @@
 //! FBX data.
 
-use std::cell::RefCell;
-use std::path::Path;
-use std::rc::Rc;
+use std::{cell::RefCell, path::Path, rc::Rc};
 
 use fbxcel::pull_parser::{self as fbxbin, any::AnyParser};
-use gtk::prelude::*;
-use gtk::Window;
+use gtk::{prelude::*, Window};
 
 use crate::{
     widgets::{FbxAttributeTable, FbxNodeTree, Logs},

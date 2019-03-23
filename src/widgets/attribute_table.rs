@@ -1,12 +1,10 @@
 //! FBX attributes table.
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::fbx::Attribute;
 
-use gtk::prelude::*;
-use gtk::{ListStore, TreeView};
+use gtk::{prelude::*, ListStore, TreeView};
 
 /// FBX attributes table.
 #[derive(Debug, Clone)]

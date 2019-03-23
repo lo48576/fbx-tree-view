@@ -1,11 +1,9 @@
 //! Logs.
 
-use std::cell::Cell;
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
 
 use fbxcel::pull_parser as fbxbin;
-use gtk::prelude::*;
-use gtk::{TreeStore, TreeView};
+use gtk::{prelude::*, TreeStore, TreeView};
 
 /// Logs widget.
 #[derive(Debug, Clone)]

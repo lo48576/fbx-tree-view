@@ -1,7 +1,6 @@
 //! FBX node tree widget.
 
-use gtk::prelude::*;
-use gtk::{TreeStore, TreeView};
+use gtk::{prelude::*, TreeStore, TreeView};
 
 use crate::FbxAttributeTable;
 
