@@ -17,7 +17,7 @@ use gtk::{FileChooserAction, FileChooserDialog, FileFilter};
 use gtk::{Menu, MenuBar, MenuItem};
 use gtk::{Orientation, Paned, Window, WindowType};
 
-use crate::widgets::{FbxAttributeTable, FbxNodeTree, Logs};
+use self::widgets::{FbxAttributeTable, FbxNodeTree, Logs};
 
 pub mod fbx;
 pub mod widgets;
