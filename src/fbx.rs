@@ -104,7 +104,7 @@ fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
     let mut attr_index = 0;
 
     'load_nodes: loop {
-        use crate::fbxbin::v7400::*;
+        use fbxbin::v7400::*;
 
         match parser.next_event()? {
             Event::StartNode(node) => {

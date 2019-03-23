@@ -5,7 +5,6 @@ extern crate fbxcel;
 extern crate gdk;
 extern crate gtk;
 
-use fbxcel::pull_parser as fbxbin;
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
