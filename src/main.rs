@@ -10,7 +10,7 @@ use std::path::Path;
 use std::rc::Rc;
 
 use crate::fbx::Attribute;
-use fbxcel::pull_parser as fbxbin;
+use fbxcel::pull_parser::{self as fbxbin, any::AnyParser};
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
@@ -177,8 +177,8 @@ fn load_fbx_binary<P: AsRef<Path>>(
             return;
         }
     };
-    let header = match fbxcel::low::FbxHeader::load(&mut file) {
-        Ok(header) => header,
+    let parser = match fbxbin::any::from_seekable_reader(&mut file) {
+        Ok(v) => v,
         Err(err) => {
             println!("Cannot open file {} as FBX binary: {}", path.display(), err);
             logs.set_store(&vec![], Some(&err));
@@ -189,25 +189,12 @@ fn load_fbx_binary<P: AsRef<Path>>(
 
     println!(
         "FBX version: {}.{}",
-        header.version().major(),
-        header.version().minor()
+        parser.fbx_version().major(),
+        parser.fbx_version().minor()
     );
 
-    let parser_version = match header.parser_version() {
-        Some(v) => v,
-        None => {
-            let ver = format!("{}.{}", header.version().major(), header.version().minor());
-            println!("Unsupported FBX version: {}", ver);
-            let err: Box<dyn std::error::Error> =
-                format!("Unsupported FBX version: {}", ver).into();
-            logs.set_store(&vec![], Some(err.as_ref()));
-            return;
-        }
-    };
-    match parser_version {
-        fbxbin::ParserVersion::V7400 => {
-            let mut parser = fbxbin::v7400::from_seekable_reader(header, file)
-                .expect("Should never fail: Unsupported FBX verison");
+    match parser {
+        AnyParser::V7400(mut parser) => {
             let warnings = Rc::new(RefCell::new(Vec::new()));
             {
                 let warnings = Rc::downgrade(&warnings);
@@ -229,10 +216,16 @@ fn load_fbx_binary<P: AsRef<Path>>(
                 }
             }
         }
-        v => {
+        parser => {
+            let ver = format!(
+                "{}.{}",
+                parser.fbx_version().major(),
+                parser.fbx_version().minor()
+            );
+            println!("Unsupported FBX version: {}", ver);
             let err: Box<dyn std::error::Error> =
-                format!("Unsupported parser version: {:?}", v).into();
-            logs.set_store(&[], Some(err.as_ref()));
+                format!("Unsupported FBX version: {}", ver).into();
+            logs.set_store(&vec![], Some(err.as_ref()));
             return;
         }
     }
