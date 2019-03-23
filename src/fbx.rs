@@ -1,225 +1,137 @@
 //! FBX data.
 
-use std::io;
+use std::{cell::RefCell, path::Path, rc::Rc};
 
-use fbxcel::pull_parser as fbxbin;
+use fbxcel::pull_parser::{self as fbxbin, any::AnyParser};
+use gtk::{prelude::*, Window};
 
-/// FBX node attribute.
-#[derive(Debug, Clone)]
-pub enum Attribute {
-    /// `bool`.
-    SingleBool(bool),
-    /// `i16`.
-    SingleI16(i16),
-    /// `i32`.
-    SingleI32(i32),
-    /// `i64`.
-    SingleI64(i64),
-    /// `f32`.
-    SingleF32(f32),
-    /// `f64`.
-    SingleF64(f64),
-    /// `[bool]`.
-    ArrayBool(Vec<bool>),
-    /// `[i32]`.
-    ArrayI32(Vec<i32>),
-    /// `[i64]`.
-    ArrayI64(Vec<i64>),
-    /// `[f32]`.
-    ArrayF32(Vec<f32>),
-    /// `[f64]`.
-    ArrayF64(Vec<f64>),
-    /// `String`.
-    String(String),
-    /// `[u8]`.
-    Binary(Vec<u8>),
-}
+use crate::{
+    widgets::{FbxAttributeTable, FbxNodeTree, Logs},
+    WINDOW_TITLE_BASE,
+};
 
-impl Attribute {
-    /// Returns type name.
-    pub fn type_string(&self) -> &str {
-        match *self {
-            Attribute::SingleBool(_) => "bool",
-            Attribute::SingleI16(_) => "i16",
-            Attribute::SingleI32(_) => "i32",
-            Attribute::SingleI64(_) => "i64",
-            Attribute::SingleF32(_) => "f32",
-            Attribute::SingleF64(_) => "f64",
-            Attribute::ArrayBool(_) => "[bool]",
-            Attribute::ArrayI32(_) => "[i32]",
-            Attribute::ArrayI64(_) => "[i64]",
-            Attribute::ArrayF32(_) => "[f32]",
-            Attribute::ArrayF64(_) => "[f64]",
-            Attribute::String(_) => "String",
-            Attribute::Binary(_) => "[u8]",
+pub use self::attribute::{Attribute, AttributeLoader};
+
+mod attribute;
+
+/// Loads the given FBX binary file.
+pub fn load_fbx_binary<P: AsRef<Path>>(
+    path: P,
+    window: &Window,
+    logs: &Logs,
+    node_tree: &FbxNodeTree,
+    node_attrs: &FbxAttributeTable,
+) {
+    use std::fs::File;
+    use std::io::BufReader;
+
+    let path = path.as_ref();
+    println!("FBX binary path = {}", path.display());
+    window.set_title(&format!("{} - {}", WINDOW_TITLE_BASE, path.display()));
+
+    logs.clear();
+    node_tree.clear();
+    node_attrs.clear();
+
+    let mut file = match File::open(path) {
+        Ok(file) => BufReader::new(file),
+        Err(err) => {
+            println!("Cannot open file {}: {}", path.display(), err);
+            logs.set_store(&vec![], Some(&err));
+            return;
         }
-    }
+    };
+    let parser = match fbxbin::any::from_seekable_reader(&mut file) {
+        Ok(v) => v,
+        Err(err) => {
+            println!("Cannot open file {} as FBX binary: {}", path.display(), err);
+            logs.set_store(&vec![], Some(&err));
+            return;
+        }
+    };
+    node_tree.append(None, "(FBX header)", None, 0);
 
-    /// Returns string representation.
-    pub fn value_string(&self) -> String {
-        match *self {
-            Attribute::SingleBool(val) => val.to_string(),
-            Attribute::SingleI16(val) => val.to_string(),
-            Attribute::SingleI32(val) => val.to_string(),
-            Attribute::SingleI64(val) => val.to_string(),
-            Attribute::SingleF32(val) => val.to_string(),
-            Attribute::SingleF64(val) => val.to_string(),
-            Attribute::ArrayBool(ref arr) => arr
-                .iter()
-                .enumerate()
-                .map(|(i, &val)| match (i & 0x0f == 0x0f, val) {
-                    (false, false) => "0, ",
-                    (false, true) => "1, ",
-                    (true, false) => "0,\n",
-                    (true, true) => "1,\n",
-                })
-                .collect(),
-            Attribute::ArrayI32(ref arr) => arr
-                .iter()
-                .enumerate()
-                .map(|(i, &val)| {
-                    if i & 0x0f == 0x0f {
-                        format!("{},\n", val)
-                    } else {
-                        format!("{}, ", val)
+    println!(
+        "FBX version: {}.{}",
+        parser.fbx_version().major(),
+        parser.fbx_version().minor()
+    );
+
+    match parser {
+        AnyParser::V7400(mut parser) => {
+            let warnings = Rc::new(RefCell::new(Vec::new()));
+            {
+                let warnings = Rc::downgrade(&warnings);
+                parser.set_warning_handler(move |warning, syn_pos| {
+                    if let Some(rc) = warnings.upgrade() {
+                        rc.borrow_mut().push((warning, syn_pos.clone()));
                     }
-                })
-                .collect(),
-            Attribute::ArrayI64(ref arr) => arr
-                .iter()
-                .enumerate()
-                .map(|(i, &val)| {
-                    if i & 0x0f == 0x0f {
-                        format!("{},\n", val)
-                    } else {
-                        format!("{}, ", val)
-                    }
-                })
-                .collect(),
-            Attribute::ArrayF32(ref arr) => arr
-                .iter()
-                .enumerate()
-                .map(|(i, &val)| {
-                    if i & 0x0f == 0x0f {
-                        format!("{},\n", val)
-                    } else {
-                        format!("{}, ", val)
-                    }
-                })
-                .collect(),
-            Attribute::ArrayF64(ref arr) => arr
-                .iter()
-                .enumerate()
-                .map(|(i, &val)| {
-                    if i & 0x0f == 0x0f {
-                        format!("{},\n", val)
-                    } else {
-                        format!("{}, ", val)
-                    }
-                })
-                .collect(),
-            Attribute::String(ref val) => {
-                val.chars()
-                    .fold(String::with_capacity(val.len()), |mut s, c| {
-                        match c {
-                            '\n' | '\t' => s.push(c),
-                            '\r' => s.push_str("\\r"),
-                            _ if (c <= '\x1f') || (c == '\x7f') => {
-                                s.push_str(&format!("\\x{:02x}", c as u32))
-                            }
-                            c => s.push(c),
-                        }
-                        s
-                    })
+                    Ok(())
+                });
             }
-            Attribute::Binary(ref arr) => arr
-                .iter()
-                .enumerate()
-                .map(|(i, &val)| {
-                    if i & 0x0f == 0x0f {
-                        format!("{:02x},\n", val)
-                    } else {
-                        format!("{:02x}, ", val)
-                    }
-                })
-                .collect(),
+            match load_fbx_binary_v7400(parser, node_tree, node_attrs) {
+                Ok(()) => {
+                    logs.set_store(warnings.borrow().iter(), None);
+                }
+                Err(err) => {
+                    println!("Failed to parse FBX file: {}", err);
+                    logs.set_store(warnings.borrow().iter(), Some(&err));
+                    return;
+                }
+            }
+        }
+        parser => {
+            let ver = format!(
+                "{}.{}",
+                parser.fbx_version().major(),
+                parser.fbx_version().minor()
+            );
+            println!("Unsupported FBX version: {}", ver);
+            let err: Box<dyn std::error::Error> =
+                format!("Unsupported FBX version: {}", ver).into();
+            logs.set_store(&vec![], Some(err.as_ref()));
+            return;
         }
     }
 }
 
-/// FBX 7.4 attribute loader.
-#[derive(Debug, Clone)]
-pub struct AttributeLoader;
+fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
+    mut parser: fbxbin::v7400::Parser<R>,
+    node_tree: &FbxNodeTree,
+    node_attrs: &FbxAttributeTable,
+) -> fbxbin::Result<()> {
+    let mut open_nodes_iter = Vec::new();
+    let mut attr_index = 0;
 
-impl fbxbin::v7400::LoadAttribute for AttributeLoader {
-    type Output = Attribute;
+    'load_nodes: loop {
+        use fbxbin::v7400::*;
 
-    fn expecting(&self) -> String {
-        "any attributes".to_owned()
+        match parser.next_event()? {
+            Event::StartNode(node) => {
+                let name = node.name().to_owned();
+                let mut attributes = node.attributes();
+                let tree_iter = node_tree.append(
+                    open_nodes_iter.last(),
+                    &name,
+                    attributes.total_count(),
+                    attr_index,
+                );
+                attr_index += attributes.total_count();
+                open_nodes_iter.push(tree_iter);
+                while let Some(attr) = attributes.load_next(AttributeLoader)? {
+                    node_attrs.push_attribute(attr);
+                }
+            }
+            Event::EndNode => {
+                open_nodes_iter.pop();
+            }
+            Event::EndFbx(footer_res) => {
+                node_tree.append(None, "(FBX footer)", None, 0);
+                let _ = footer_res?;
+                break 'load_nodes;
+            }
+        }
     }
 
-    fn load_bool(self, v: bool) -> fbxbin::Result<Self::Output> {
-        Ok(Attribute::SingleBool(v))
-    }
-    fn load_i16(self, v: i16) -> fbxbin::Result<Self::Output> {
-        Ok(Attribute::SingleI16(v))
-    }
-    fn load_i32(self, v: i32) -> fbxbin::Result<Self::Output> {
-        Ok(Attribute::SingleI32(v))
-    }
-    fn load_i64(self, v: i64) -> fbxbin::Result<Self::Output> {
-        Ok(Attribute::SingleI64(v))
-    }
-    fn load_f32(self, v: f32) -> fbxbin::Result<Self::Output> {
-        Ok(Attribute::SingleF32(v))
-    }
-    fn load_f64(self, v: f64) -> fbxbin::Result<Self::Output> {
-        Ok(Attribute::SingleF64(v))
-    }
-    fn load_seq_bool(
-        self,
-        iter: impl Iterator<Item = fbxbin::Result<bool>>,
-        _: usize,
-    ) -> fbxbin::Result<Self::Output> {
-        iter.collect::<fbxbin::Result<_>>()
-            .map(Attribute::ArrayBool)
-    }
-    fn load_seq_i32(
-        self,
-        iter: impl Iterator<Item = fbxbin::Result<i32>>,
-        _: usize,
-    ) -> fbxbin::Result<Self::Output> {
-        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayI32)
-    }
-    fn load_seq_i64(
-        self,
-        iter: impl Iterator<Item = fbxbin::Result<i64>>,
-        _: usize,
-    ) -> fbxbin::Result<Self::Output> {
-        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayI64)
-    }
-    fn load_seq_f32(
-        self,
-        iter: impl Iterator<Item = fbxbin::Result<f32>>,
-        _: usize,
-    ) -> fbxbin::Result<Self::Output> {
-        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayF32)
-    }
-    fn load_seq_f64(
-        self,
-        iter: impl Iterator<Item = fbxbin::Result<f64>>,
-        _: usize,
-    ) -> fbxbin::Result<Self::Output> {
-        iter.collect::<fbxbin::Result<_>>().map(Attribute::ArrayF64)
-    }
-    fn load_binary(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
-        let mut buf = Vec::with_capacity(len as usize);
-        reader.read_to_end(&mut buf)?;
-        Ok(Attribute::Binary(buf))
-    }
-    fn load_string(self, mut reader: impl io::Read, len: u64) -> fbxbin::Result<Self::Output> {
-        let mut buf = String::with_capacity(len as usize);
-        reader.read_to_string(&mut buf)?;
-        Ok(Attribute::String(buf))
-    }
+    Ok(())
 }
