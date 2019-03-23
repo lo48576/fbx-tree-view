@@ -19,11 +19,10 @@ use gtk::{Menu, MenuBar, MenuItem};
 use gtk::{Orientation, Paned, Window, WindowType};
 
 use crate::fbx::Attribute;
-
-use self::logs::Logs;
+use crate::widgets::Logs;
 
 pub mod fbx;
-mod logs;
+pub mod widgets;
 
 const WINDOW_TITLE_BASE: &str = "FBX tree viewer";
 
@@ -113,7 +112,7 @@ fn main() {
 
     let logs = Logs::new();
     let scrolled_logs = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
-    scrolled_logs.add(&logs.widget);
+    scrolled_logs.add(logs.widget());
 
     //
     // Main region of the window.

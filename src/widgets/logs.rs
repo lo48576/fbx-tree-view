@@ -7,16 +7,82 @@ use fbxcel::pull_parser as fbxbin;
 use gtk::prelude::*;
 use gtk::{TreeStore, TreeView};
 
+/// Logs widget.
 #[derive(Debug, Clone)]
 pub struct Logs {
-    pub store: TreeStore,
-    pub widget: TreeView,
-    pub num_entries: Rc<Cell<u64>>,
+    store: TreeStore,
+    widget: TreeView,
+    num_entries: Rc<Cell<u64>>,
 }
 
 impl Logs {
     /// Creates a new log store and widget.
     pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets the given warnings and errors to be shown.
+    pub fn set_store<
+        'a,
+        W: IntoIterator<Item = &'a (fbxbin::Warning, fbxbin::SyntacticPosition)>,
+    >(
+        &self,
+        warnings: W,
+        error: Option<&(dyn std::error::Error + 'static)>,
+    ) {
+        self.clear();
+        for (warning, syn_pos) in warnings {
+            self.append(warning, Some(syn_pos), "warning");
+        }
+
+        if let Some(err) = error {
+            let syn_pos = err
+                .downcast_ref::<fbxbin::Error>()
+                .and_then(|parser_error| parser_error.position());
+            self.append(err, syn_pos, "Error");
+        }
+    }
+
+    fn append(
+        &self,
+        err: &dyn std::error::Error,
+        syn_pos: Option<&fbxbin::SyntacticPosition>,
+        severity: &str,
+    ) {
+        let mut target = err;
+        let mut parent = None;
+        let mut i: u64 = self.num_entries.get();
+        loop {
+            let syn_pos = syn_pos.map_or_else(String::new, |pos| format!("{:?}", pos));
+            parent = Some(self.store.insert_with_values(
+                parent.as_ref(),
+                None,
+                &[0, 1, 2, 3],
+                &[&i, &severity, &target.to_string(), &syn_pos],
+            ));
+            i += 1;
+            match target.source() {
+                Some(err) => target = err,
+                None => break,
+            }
+        }
+        self.num_entries.set(i);
+    }
+
+    /// Clears internal store.
+    pub fn clear(&self) {
+        self.store.clear();
+        self.num_entries.set(0);
+    }
+
+    /// Returns a reference to the `TreeView`.
+    pub fn widget(&self) -> &TreeView {
+        &self.widget
+    }
+}
+
+impl Default for Logs {
+    fn default() -> Self {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // Error and warning index, severity, description, syntactic position
@@ -75,63 +141,10 @@ impl Logs {
             widget.append_column(&column);
         }
 
-        Logs {
+        Self {
             store,
             widget,
             num_entries: Rc::new(Cell::new(0)),
         }
-    }
-
-    pub fn set_store<
-        'a,
-        W: IntoIterator<Item = &'a (fbxbin::Warning, fbxbin::SyntacticPosition)>,
-    >(
-        &self,
-        warnings: W,
-        error: Option<&(dyn std::error::Error + 'static)>,
-    ) {
-        self.clear();
-        for (warning, syn_pos) in warnings {
-            self.append(warning, Some(syn_pos), "warning");
-        }
-
-        if let Some(err) = error {
-            let syn_pos = err
-                .downcast_ref::<fbxbin::Error>()
-                .and_then(|parser_error| parser_error.position());
-            self.append(err, syn_pos, "Error");
-        }
-    }
-
-    fn append(
-        &self,
-        err: &dyn std::error::Error,
-        syn_pos: Option<&fbxbin::SyntacticPosition>,
-        severity: &str,
-    ) {
-        let mut target = err;
-        let mut parent = None;
-        let mut i: u64 = self.num_entries.get();
-        loop {
-            let syn_pos = syn_pos.map_or_else(String::new, |pos| format!("{:?}", pos));
-            parent = Some(self.store.insert_with_values(
-                parent.as_ref(),
-                None,
-                &[0, 1, 2, 3],
-                &[&i, &severity, &target.to_string(), &syn_pos],
-            ));
-            i += 1;
-            match target.source() {
-                Some(err) => target = err,
-                None => break,
-            }
-        }
-        self.num_entries.set(i);
-    }
-
-    /// Clears internal store.
-    pub fn clear(&self) {
-        self.store.clear();
-        self.num_entries.set(0);
     }
 }
