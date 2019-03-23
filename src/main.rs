@@ -177,7 +177,7 @@ fn load_fbx_binary<P: AsRef<Path>>(
             return;
         }
     };
-    let header = match fbxcel::low::FbxHeader::read_fbx_header(&mut file) {
+    let header = match fbxcel::low::FbxHeader::load(&mut file) {
         Ok(header) => header,
         Err(err) => {
             println!("Cannot open file {} as FBX binary: {}", path.display(), err);
@@ -228,6 +228,7 @@ fn load_fbx_binary<P: AsRef<Path>>(
                 }
             }
         }
+        v => panic!("Unsupported parser version: {:?}", v),
     }
 }
 
@@ -371,7 +372,7 @@ impl Logs {
                 &[&i, &severity, &target.to_string(), &syn_pos],
             ));
             i += 1;
-            match target.cause() {
+            match target.source() {
                 Some(err) => target = err,
                 None => break,
             }
@@ -590,7 +591,7 @@ fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
                 );
                 attr_index += attributes.total_count();
                 open_nodes_iter.push(tree_iter);
-                while let Some(attr) = attributes.visit_next(fbx::AttributeVisitor)? {
+                while let Some(attr) = attributes.load_next(fbx::AttributeLoader)? {
                     node_attrs.push_attrs(attr);
                 }
             }
