@@ -198,7 +198,8 @@ fn load_fbx_binary<P: AsRef<Path>>(
         None => {
             let ver = format!("{}.{}", header.version().major(), header.version().minor());
             println!("Unsupported FBX version: {}", ver);
-            let err: Box<dyn std::error::Error> = format!("Unsupported FBX version: {}", ver).into();
+            let err: Box<dyn std::error::Error> =
+                format!("Unsupported FBX version: {}", ver).into();
             logs.set_store(&vec![], Some(err.as_ref()));
             return;
         }
