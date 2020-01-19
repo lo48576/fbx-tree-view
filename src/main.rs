@@ -1,10 +1,6 @@
 //! FBX tree viewer.
 #![warn(missing_docs)]
 
-extern crate fbxcel;
-extern crate gdk;
-extern crate gtk;
-
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
