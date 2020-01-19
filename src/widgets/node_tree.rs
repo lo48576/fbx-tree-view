@@ -1,5 +1,6 @@
 //! FBX node tree widget.
 
+use glib::Type;
 use gtk::{prelude::*, TreeStore, TreeView};
 
 use crate::FbxAttributeTable;
@@ -43,11 +44,11 @@ impl FbxNodeTree {
                 };
                 let num_attrs = model
                     .get_value(&tree_iter, 1)
-                    .get::<u64>()
+                    .get_some::<u64>()
                     .expect("column[1] of `FbxAttributeTable` is not u64");
                 let attrs_index = model
                     .get_value(&tree_iter, 2)
-                    .get::<u64>()
+                    .get_some::<u64>()
                     .expect("column[2] of `FbxAttributeTable` is not u64");
                 node_attrs.show_attrs(attrs_index, num_attrs);
             });
@@ -85,7 +86,7 @@ impl Default for FbxNodeTree {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // node name, # of attributes, index of attribute.
-        let column_types = &[gtk::Type::String, gtk::Type::U64, gtk::Type::U64];
+        let column_types = &[Type::String, Type::U64, Type::U64];
         let store = TreeStore::new(column_types);
         let widget = TreeView::new_with_model(&store);
         widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);
