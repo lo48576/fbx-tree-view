@@ -85,14 +85,14 @@ dependencies = [
 name = "fbx-tree-view"
 version = "0.1.2"
 dependencies = [
- "fbxcel 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fbxcel 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gdk 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gtk 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "fbxcel"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -364,7 +364,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum cc 1.0.47 (registry+https://github.com/rust-lang/crates.io-index)" = "aa87058dce70a3ff5621797f1506cb837edd02ac4c0ae642b4542dce802908b8"
 "checksum cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)" = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 "checksum crc32fast 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ba125de2af0df55319f41944744ad91c71113bf74a4646efff39afe1f6842db1"
-"checksum fbxcel 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1acfaf922faf71f283b73190b4f5df5b8c2101d0e2eeee34590c2ca511b2aaa0"
+"checksum fbxcel 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2028e351ec33af6ffd1d6298254c9cfc3346474b4bfc71f646f86d0781dcd257"
 "checksum fragile 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "05f8140122fa0d5dcb9fc8627cfce2b37cc1500f752636d46ea28bc26785c2f9"
 "checksum gdk 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6243e995f41f3a61a31847e54cc719edce93dd9140c89dca3b9919be1cfe22d5"
 "checksum gdk-pixbuf 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9726408ee1bbada83094326a99b9c68fea275f9dbb515de242a69e72051f4fcc"
