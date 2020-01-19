@@ -1,10 +1,6 @@
 //! FBX tree viewer.
 #![warn(missing_docs)]
 
-extern crate fbxcel;
-extern crate gdk;
-extern crate gtk;
-
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
 use gtk::{AccelFlags, AccelGroup, WidgetExt};
@@ -131,12 +127,9 @@ fn main() {
     });
 
     {
-        let window = window.clone();
         let fbx_binary_chooser = create_fbx_binary_chooser(&window.clone());
-        let logs = logs.clone();
-        let node_tree = node_tree.clone();
         menu_file_open.connect_activate(move |_| {
-            if fbx_binary_chooser.run() == gtk::ResponseType::Ok.into() {
+            if fbx_binary_chooser.run() == gtk::ResponseType::Ok {
                 if let Some(filename) = fbx_binary_chooser.get_filename() {
                     load_fbx_binary(filename, &window, &logs, &node_tree, &node_attrs);
                 }

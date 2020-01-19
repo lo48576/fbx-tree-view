@@ -4,6 +4,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::fbx::Attribute;
 
+use glib::Type;
 use gtk::{prelude::*, ListStore, TreeView};
 
 /// FBX attributes table.
@@ -59,7 +60,7 @@ impl Default for FbxAttributeTable {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // index, type, value.
-        let column_types = &[gtk::Type::U64, gtk::Type::String, gtk::Type::String];
+        let column_types = &[Type::U64, Type::String, Type::String];
         let store = ListStore::new(column_types);
         let widget = TreeView::new_with_model(&store);
         widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);

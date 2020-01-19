@@ -3,6 +3,7 @@
 use std::{cell::Cell, rc::Rc};
 
 use fbxcel::pull_parser as fbxbin;
+use glib::Type;
 use gtk::{prelude::*, TreeStore, TreeView};
 
 /// Logs widget.
@@ -84,12 +85,7 @@ impl Default for Logs {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // Error and warning index, severity, description, syntactic position
-        let column_types = &[
-            gtk::Type::U64,
-            gtk::Type::String,
-            gtk::Type::String,
-            gtk::Type::String,
-        ];
+        let column_types = &[Type::U64, Type::String, Type::String, Type::String];
         let store = TreeStore::new(column_types);
         let widget = TreeView::new_with_model(&store);
         widget.set_headers_visible(true);
