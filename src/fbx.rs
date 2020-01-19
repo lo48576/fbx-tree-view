@@ -76,7 +76,6 @@ pub fn load_fbx_binary<P: AsRef<Path>>(
                 Err(err) => {
                     println!("Failed to parse FBX file: {}", err);
                     logs.set_store(warnings.borrow().iter(), Some(&err));
-                    return;
                 }
             }
         }
@@ -90,7 +89,6 @@ pub fn load_fbx_binary<P: AsRef<Path>>(
             let err: Box<dyn std::error::Error> =
                 format!("Unsupported FBX version: {}", ver).into();
             logs.set_store(&vec![], Some(err.as_ref()));
-            return;
         }
     }
 }
