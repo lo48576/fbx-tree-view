@@ -88,7 +88,7 @@ impl Default for FbxNodeTree {
         // node name, # of attributes, index of attribute.
         let column_types = &[Type::String, Type::U64, Type::U64];
         let store = TreeStore::new(column_types);
-        let widget = TreeView::new_with_model(&store);
+        let widget = TreeView::with_model(&store);
         widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);
         widget.set_enable_tree_lines(true);
         widget.set_headers_visible(true);
