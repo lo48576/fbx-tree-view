@@ -87,7 +87,7 @@ impl Default for Logs {
         // Error and warning index, severity, description, syntactic position
         let column_types = &[Type::U64, Type::String, Type::String, Type::String];
         let store = TreeStore::new(column_types);
-        let widget = TreeView::new_with_model(&store);
+        let widget = TreeView::with_model(&store);
         widget.set_headers_visible(true);
         {
             let column = TreeViewColumn::new();

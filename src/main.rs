@@ -43,30 +43,29 @@ fn main() {
     //
 
     let menu_bar = MenuBar::new();
-    let menu_file = MenuItem::new_with_mnemonic("_File");
+    let menu_file = MenuItem::with_mnemonic("_File");
     let submenu_file = Menu::new();
-    let menu_file_open = MenuItem::new_with_mnemonic("_Open FBX binary");
+    let menu_file_open = MenuItem::with_mnemonic("_Open FBX binary");
     submenu_file.append(&menu_file_open);
     submenu_file.append(&gtk::SeparatorMenuItem::new());
-    let menu_file_quit = MenuItem::new_with_mnemonic("_Quit");
+    let menu_file_quit = MenuItem::with_mnemonic("_Quit");
     submenu_file.append(&menu_file_quit);
     menu_file.set_submenu(Some(&submenu_file));
     menu_bar.append(&menu_file);
     root_widget.pack_start(&menu_bar, false, false, 0);
 
     {
-        use gdk::enums::key;
         menu_file_open.add_accelerator(
             "activate",
             &accel_group,
-            key::O,
+            *gdk::keys::constants::O,
             gdk::ModifierType::CONTROL_MASK,
             AccelFlags::VISIBLE,
         );
         menu_file_quit.add_accelerator(
             "activate",
             &accel_group,
-            key::Q,
+            *gdk::keys::constants::Q,
             gdk::ModifierType::CONTROL_MASK,
             AccelFlags::VISIBLE,
         );

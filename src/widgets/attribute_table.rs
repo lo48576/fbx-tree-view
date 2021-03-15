@@ -62,7 +62,7 @@ impl Default for FbxAttributeTable {
         // index, type, value.
         let column_types = &[Type::U64, Type::String, Type::String];
         let store = ListStore::new(column_types);
-        let widget = TreeView::new_with_model(&store);
+        let widget = TreeView::with_model(&store);
         widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);
         widget.set_enable_tree_lines(true);
         widget.set_headers_visible(true);
