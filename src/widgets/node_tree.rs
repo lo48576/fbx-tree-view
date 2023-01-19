@@ -21,37 +21,35 @@ impl FbxNodeTree {
     /// Connect events.
     pub fn initialize(&self, node_attrs: &FbxAttributeTable) {
         let node_attrs = node_attrs.clone();
-        self.widget
-            .get_selection()
-            .connect_changed(move |selection| {
-                let (paths, model) = selection.get_selected_rows();
-                let descendant_path = match paths.last() {
-                    Some(path) => path,
-                    None => {
-                        println!("selection has changed but paths is empty");
-                        return;
-                    }
-                };
-                let tree_iter = match model.get_iter(descendant_path) {
-                    Some(iter) => iter,
-                    None => {
-                        println!(
-                            "selection has changed but tree_iter is invalid for path {:?}",
-                            descendant_path
-                        );
-                        return;
-                    }
-                };
-                let num_attrs = model
-                    .get_value(&tree_iter, 1)
-                    .get_some::<u64>()
-                    .expect("column[1] of `FbxAttributeTable` is not u64");
-                let attrs_index = model
-                    .get_value(&tree_iter, 2)
-                    .get_some::<u64>()
-                    .expect("column[2] of `FbxAttributeTable` is not u64");
-                node_attrs.show_attrs(attrs_index, num_attrs);
-            });
+        self.widget.selection().connect_changed(move |selection| {
+            let (paths, model) = selection.selected_rows();
+            let descendant_path = match paths.last() {
+                Some(path) => path,
+                None => {
+                    println!("selection has changed but paths is empty");
+                    return;
+                }
+            };
+            let tree_iter = match model.iter(descendant_path) {
+                Some(iter) => iter,
+                None => {
+                    println!(
+                        "selection has changed but tree_iter is invalid for path {:?}",
+                        descendant_path
+                    );
+                    return;
+                }
+            };
+            let num_attrs = model
+                .value(&tree_iter, 1)
+                .get::<u64>()
+                .expect("column[1] of `FbxAttributeTable` is not u64");
+            let attrs_index = model
+                .value(&tree_iter, 2)
+                .get::<u64>()
+                .expect("column[2] of `FbxAttributeTable` is not u64");
+            node_attrs.show_attrs(attrs_index, num_attrs);
+        });
     }
 
     /// Clears internal store.
@@ -70,8 +68,11 @@ impl FbxNodeTree {
         self.store.insert_with_values(
             parent,
             None,
-            &[0, 1, 2],
-            &[&name, num_attrs.into().as_ref().unwrap_or(&0), &attr_index],
+            &[
+                (0, &name),
+                (1, num_attrs.into().as_ref().unwrap_or(&0)),
+                (2, &attr_index),
+            ],
         )
     }
 
@@ -86,7 +87,7 @@ impl Default for FbxNodeTree {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // node name, # of attributes, index of attribute.
-        let column_types = &[Type::String, Type::U64, Type::U64];
+        let column_types = &[Type::STRING, Type::U64, Type::U64];
         let store = TreeStore::new(column_types);
         let widget = TreeView::with_model(&store);
         widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);
@@ -95,18 +96,18 @@ impl Default for FbxNodeTree {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("node name");
-            column.add_attribute(&cell, "text", 0);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 0);
             column.set_resizable(true);
             widget.append_column(&column);
         }
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("# of attrs");
-            column.add_attribute(&cell, "text", 1);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 1);
             column.set_resizable(true);
             widget.append_column(&column);
         }

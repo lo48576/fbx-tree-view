@@ -3,7 +3,7 @@
 
 use gtk::prelude::*;
 use gtk::ScrolledWindow;
-use gtk::{AccelFlags, AccelGroup, WidgetExt};
+use gtk::{AccelFlags, AccelGroup};
 use gtk::{FileChooserAction, FileChooserDialog, FileFilter};
 use gtk::{Menu, MenuBar, MenuItem};
 use gtk::{Orientation, Paned, Window, WindowType};
@@ -76,7 +76,7 @@ fn main() {
     //
 
     let node_tree = FbxNodeTree::new();
-    let scrolled_node_tree = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
+    let scrolled_node_tree = ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     scrolled_node_tree.add(node_tree.widget());
 
     //
@@ -84,7 +84,7 @@ fn main() {
     //
 
     let node_attrs = FbxAttributeTable::new();
-    let scrolled_node_attrs = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
+    let scrolled_node_attrs = ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     scrolled_node_attrs.add(node_attrs.widget());
 
     node_tree.initialize(&node_attrs);
@@ -103,7 +103,7 @@ fn main() {
     //
 
     let logs = Logs::new();
-    let scrolled_logs = ScrolledWindow::new(gtk::NONE_ADJUSTMENT, gtk::NONE_ADJUSTMENT);
+    let scrolled_logs = ScrolledWindow::new(gtk::Adjustment::NONE, gtk::Adjustment::NONE);
     scrolled_logs.add(logs.widget());
 
     //
@@ -129,7 +129,7 @@ fn main() {
         let fbx_binary_chooser = create_fbx_binary_chooser(&window);
         menu_file_open.connect_activate(move |_| {
             if fbx_binary_chooser.run() == gtk::ResponseType::Ok {
-                if let Some(filename) = fbx_binary_chooser.get_filename() {
+                if let Some(filename) = fbx_binary_chooser.filename() {
                     load_fbx_binary(filename, &window, &logs, &node_tree, &node_attrs);
                 }
             }
