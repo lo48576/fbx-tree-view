@@ -56,8 +56,12 @@ impl Logs {
             parent = Some(self.store.insert_with_values(
                 parent.as_ref(),
                 None,
-                &[0, 1, 2, 3],
-                &[&i, &severity, &target.to_string(), &syn_pos],
+                &[
+                    (0, &i),
+                    (1, &severity),
+                    (2, &target.to_string()),
+                    (3, &syn_pos),
+                ],
             ));
             i += 1;
             match target.source() {
@@ -85,18 +89,18 @@ impl Default for Logs {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // Error and warning index, severity, description, syntactic position
-        let column_types = &[Type::U64, Type::String, Type::String, Type::String];
+        let column_types = &[Type::U64, Type::STRING, Type::STRING, Type::STRING];
         let store = TreeStore::new(column_types);
         let widget = TreeView::with_model(&store);
         widget.set_headers_visible(true);
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             // Right align.
             column.set_alignment(1.0);
             column.set_title("#");
-            column.add_attribute(&cell, "text", 0);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 0);
             column.set_clickable(true);
             column.set_sort_column_id(0);
             widget.append_column(&column);
@@ -104,9 +108,9 @@ impl Default for Logs {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("severity");
-            column.add_attribute(&cell, "text", 1);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 1);
             column.set_clickable(true);
             column.set_resizable(true);
             column.set_sort_column_id(1);
@@ -115,9 +119,9 @@ impl Default for Logs {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("description");
-            column.add_attribute(&cell, "text", 2);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 2);
             column.set_clickable(true);
             column.set_resizable(true);
             column.set_sort_column_id(2);
@@ -126,9 +130,9 @@ impl Default for Logs {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("position");
-            column.add_attribute(&cell, "text", 3);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 3);
             column.set_clickable(true);
             column.set_resizable(true);
             column.set_sort_column_id(3);

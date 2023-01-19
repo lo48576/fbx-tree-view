@@ -46,7 +46,7 @@ impl FbxAttributeTable {
 
     fn append_store(&self, index: u64, typename: &str, value: &str) -> gtk::TreeIter {
         self.store
-            .insert_with_values(None, &[0, 1, 2], &[&index, &typename, &value])
+            .insert_with_values(None, &[(0, &index), (1, &typename), (2, &value)])
     }
 
     /// Returns a reference to the `TreeView`.
@@ -60,7 +60,7 @@ impl Default for FbxAttributeTable {
         use gtk::{CellRendererText, TreeViewColumn};
 
         // index, type, value.
-        let column_types = &[Type::U64, Type::String, Type::String];
+        let column_types = &[Type::U64, Type::STRING, Type::STRING];
         let store = ListStore::new(column_types);
         let widget = TreeView::with_model(&store);
         widget.set_grid_lines(gtk::TreeViewGridLines::Vertical);
@@ -69,9 +69,9 @@ impl Default for FbxAttributeTable {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("#");
-            column.add_attribute(&cell, "text", 0);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 0);
             column.set_clickable(true);
             column.set_sort_column_id(0);
             widget.append_column(&column);
@@ -79,9 +79,9 @@ impl Default for FbxAttributeTable {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("type");
-            column.add_attribute(&cell, "text", 1);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 1);
             column.set_clickable(true);
             column.set_resizable(true);
             column.set_sort_column_id(1);
@@ -90,9 +90,9 @@ impl Default for FbxAttributeTable {
         {
             let column = TreeViewColumn::new();
             let cell = CellRendererText::new();
-            column.pack_start(&cell, true);
+            TreeViewColumnExt::pack_start(&column, &cell, true);
             column.set_title("value");
-            column.add_attribute(&cell, "text", 2);
+            TreeViewColumnExt::add_attribute(&column, &cell, "text", 2);
             column.set_resizable(true);
             widget.append_column(&column);
         }
