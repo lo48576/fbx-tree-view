@@ -126,7 +126,7 @@ fn main() {
     });
 
     {
-        let fbx_binary_chooser = create_fbx_binary_chooser(&window.clone());
+        let fbx_binary_chooser = create_fbx_binary_chooser(&window);
         menu_file_open.connect_activate(move |_| {
             if fbx_binary_chooser.run() == gtk::ResponseType::Ok {
                 if let Some(filename) = fbx_binary_chooser.get_filename() {
