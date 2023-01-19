@@ -41,7 +41,7 @@ pub fn load_fbx_binary<P: AsRef<Path>>(
             return;
         }
     };
-    let parser = match fbxbin::any::from_seekable_reader(&mut file) {
+    let parser = match AnyParser::from_seekable_reader(&mut file) {
         Ok(v) => v,
         Err(err) => {
             println!("Cannot open file {} as FBX binary: {}", path.display(), err);
@@ -93,7 +93,7 @@ pub fn load_fbx_binary<P: AsRef<Path>>(
     }
 }
 
-fn load_fbx_binary_v7400<R: fbxbin::ParserSource>(
+fn load_fbx_binary_v7400<R: std::io::Read>(
     mut parser: fbxbin::v7400::Parser<R>,
     node_tree: &FbxNodeTree,
     node_attrs: &FbxAttributeTable,
