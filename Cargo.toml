@@ -3,6 +3,7 @@ name = "fbx-tree-view"
 version = "0.1.2"
 authors = ["Takuma YOSHIOKA <lo48576@hard-wi.red>"]
 edition = "2018"
+rust-version = "1.63"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 description = "GUI viewer of FBX tree structure"

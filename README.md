@@ -1,6 +1,6 @@
 # fbx-tree-view
 
-![Minimum rustc version: 1.33](https://img.shields.io/badge/rustc-1.33+-lightgray.svg)
+![Minimum rustc version: 1.63](https://img.shields.io/badge/rustc-1.63+-lightgray.svg)
 
 `fbx-tree-view` is a viewer of internal FBX node tree (and their properties).
 This may be useful for developers who implement FBX loader.
@@ -9,11 +9,11 @@ This may be useful for developers who implement FBX loader.
 
 ### Rust version
 
-Latest stable compiler (currently 1.33) is supported.
+Stable compiler (1.63.0 or later) is supported.
 
 ### Libraries
 
-This software uses GTK+ 3.
+This software uses GTK+ 3.18 or later.
 
 ## Screenshot
 
