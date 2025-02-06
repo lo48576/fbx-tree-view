@@ -122,7 +122,7 @@ fn main() {
 
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
-        Inhibit(false)
+        glib::Propagation::Proceed
     });
 
     {
@@ -154,13 +154,13 @@ fn create_fbx_binary_chooser<'a, W: Into<Option<&'a Window>>>(window: W) -> File
         fbx_filter.set_name(Some("FBX files"));
         fbx_filter.add_pattern("*.fbx");
         fbx_filter.add_pattern("*.FBX");
-        file_chooser.add_filter(&fbx_filter);
+        file_chooser.add_filter(fbx_filter);
     }
     {
         let all_filter = FileFilter::new();
         all_filter.set_name(Some("All files"));
         all_filter.add_pattern("*");
-        file_chooser.add_filter(&all_filter);
+        file_chooser.add_filter(all_filter);
     }
     file_chooser.add_buttons(&[
         ("Cancel", gtk::ResponseType::Cancel),

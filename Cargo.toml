@@ -10,6 +10,6 @@ description = "GUI viewer of FBX tree structure"
 
 [dependencies]
 fbxcel = "0.9.0"
-gdk = "0.16.2"
-glib = "0.16.7"
-gtk = "0.16.2"
+gdk = "0.18.2"
+glib = "0.18.5"
+gtk = "0.18.2"
